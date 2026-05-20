@@ -1,11 +1,14 @@
-const dotenv = require("dotenv")
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const helmet = require('helmet');
 const mongoose = require('mongoose');
 
-dotenv.config();
+const auth = require('./routes/auth');
+const errorHandler = require('./middlewares/errorHandler')
+
 const app = express();
 
 app.use(helmet());
@@ -15,24 +18,21 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 if(process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'))
 }
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-app.use((err, req, res, next) => {
-  const statusCode = err.statusCode || 500;
-  res.status(statusCode).json({
-    success: false,
-    message: err.message || 'Internal Server Error',
-  });
-});
+app.use('/api/auth', auth);
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000
 
