@@ -44,6 +44,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
        .finally(() => setIsLoading(false));
   }, []);
 
+  useEffect(() => {
+    const handler = () => logout();
+    window.addEventListener('auth:logout', handler);
+    return () => window.removeEventListener('auth:logout', handler);
+  }, []);
+
   const login = async (email: string, password: string): Promise<User> => {
     const res = await api.post('/auth/login', { email, password });
     localStorage.setItem('token', res.data.token);

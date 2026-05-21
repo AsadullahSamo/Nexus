@@ -99,17 +99,15 @@ export const RegisterPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <Input
-                label="Full name"
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
-                fullWidth
-                startAdornment={<User size={18} />}
-              />
-            </div>
+            <Input
+              label="Full name"
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+              fullWidth
+              startAdornment={<User size={18} />}
+            />
 
             <Input
               label="Email address"
