@@ -3,8 +3,7 @@ import api from '../lib/api';
 
 interface User {
   _id: string;
-  firstName: string;
-  lastName: string;
+  fullName: string;
   email: string;
   role: 'entrepreneur' | 'investor';
   avatar: string | null;
@@ -15,14 +14,13 @@ interface AuthContextValue {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (data: RegisterPayload) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
+  register: (data: RegisterPayload) => Promise<User>;
   logout: () => void;
 }
 
 interface RegisterPayload {
-  firstName: string;
-  lastName: string;
+  fullName: string;
   email: string;
   password: string;
   role: 'entrepreneur' | 'investor';
@@ -46,16 +44,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
        .finally(() => setIsLoading(false));
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<User> => {
     const res = await api.post('/auth/login', { email, password });
     localStorage.setItem('token', res.data.token);
     setUser(res.data.user);
+    return res.data.user;
   };
 
-  const register = async (data: RegisterPayload) => {
+  const register = async (data: RegisterPayload): Promise<User> => {
     const res = await api.post('/auth/register', data);
     localStorage.setItem('token', res.data.token);
     setUser(res.data.user);
+    return res.data.user;
   };
 
   const logout = () => {

@@ -13,14 +13,14 @@ const register = asyncHandler(async (req, res, next) => {
     return next(new AppError(errors.array()[0].msg, 400));
   }
 
-  const { firstName, lastName, email, password, role } = req.body;
+  const { fullName, email, password, role } = req.body;
 
   const existingUser = await User.findOne({ email });
   if (existingUser) {
     return next(new AppError('Email already registered', 409));
   }
 
-  const user = await User.create({ firstName, lastName, email, password, role });
+  const user = await User.create({ fullName, email, password, role });
   const token = signToken(user._id);
 
   res.status(201).json({
