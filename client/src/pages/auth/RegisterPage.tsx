@@ -100,7 +100,7 @@ export const RegisterPage: React.FC = () => {
             </div>
 
             <Input
-              label="Full name"
+              label="Name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}

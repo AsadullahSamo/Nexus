@@ -84,7 +84,7 @@ export const SettingsPage: React.FC = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Input
-                  label="Full Name"
+                  label="Name"
                   defaultValue={user.name}
                 />
                 
