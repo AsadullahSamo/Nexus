@@ -6,7 +6,9 @@ const morgan = require('morgan');
 const helmet = require('helmet');
 const mongoose = require('mongoose');
 
-const auth = require('./routes/auth');
+const authRoutes = require('./routes/auth');
+const userRoutes = require("./routes/users")
+
 const errorHandler = require('./middlewares/errorHandler')
 
 const app = express();
@@ -31,7 +33,8 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-app.use('/api/auth', auth);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000

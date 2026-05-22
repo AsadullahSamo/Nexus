@@ -1,4 +1,5 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
+import {useProfile, useUpdateProfile} from '../../hooks/useProfile'
 import { User, Lock, Bell, Globe, Palette, CreditCard } from 'lucide-react';
 import { Card, CardHeader, CardBody } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
@@ -8,9 +9,22 @@ import { Avatar } from '../../components/ui/Avatar';
 import { useAuth } from '../../context/AuthContext';
 
 export const SettingsPage: React.FC = () => {
-  const { user } = useAuth();
+  
+  const { user, updateUser: syncAuthUser } = useAuth();
+  const { data: profile } = useProfile(user?._id ?? '');
+  const { mutate: updateProfile, isPending } = useUpdateProfile(syncAuthUser);
   
   if (!user) return null;
+
+  const [name, setName] = useState('');
+  const [bio, setBio] = useState('');
+
+  useEffect(() => {
+    if (profile) {
+      setName(profile.name ?? '');
+      setBio(profile.bio ?? '');
+    }
+  }, [profile]);
   
   return (
     <div className="space-y-6 animate-fade-in">
@@ -67,8 +81,8 @@ export const SettingsPage: React.FC = () => {
             <CardBody className="space-y-6">
               <div className="flex items-center gap-6">
                 <Avatar
-                  src={user.avatarUrl}
-                  alt={user.name}
+                  src={profile?.avatar ?? null}
+                  alt={profile?.name ?? null}
                   size="xl"
                 />
                 
@@ -86,6 +100,7 @@ export const SettingsPage: React.FC = () => {
                 <Input
                   label="Name"
                   defaultValue={user.name}
+                  onChange={(e) => setName(e.target.value)}
                 />
                 
                 <Input
@@ -113,13 +128,19 @@ export const SettingsPage: React.FC = () => {
                 <textarea
                   className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                   rows={4}
-                  defaultValue={user.bio}
-                ></textarea>
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                />
               </div>
               
               <div className="flex justify-end gap-3">
                 <Button variant="outline">Cancel</Button>
-                <Button>Save Changes</Button>
+                <Button
+                  isLoading={isPending}
+                  onClick={() => updateProfile({ id: user!._id, data: { name, bio } })}
+                >
+                  Save Changes
+                </Button>
               </div>
             </CardBody>
           </Card>

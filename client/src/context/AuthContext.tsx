@@ -17,6 +17,7 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<User>;
   register: (data: RegisterPayload) => Promise<User>;
   logout: () => void;
+  updateUser: (data: Partial<User>) => void;
 }
 
 interface RegisterPayload {
@@ -69,6 +70,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   };
 
+  const updateUser = (data: Partial<User>) => {
+    setUser((prev) => (prev ? { ...prev, ...data } : prev));
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -78,6 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         login,
         register,
         logout,
+        updateUser
       }}
     >
       {children}
