@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, LogIn, AlertCircle } from 'lucide-react';
+import { Mail, Lock, LogIn, AlertCircle, CircleDollarSign, Building2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -25,6 +25,16 @@ export const LoginPage: React.FC = () => {
     } catch (err: any) {
       setError(err.response?.data?.message || 'Invalid email or password');
       setIsLoading(false);
+    }
+  };
+
+  const fillDemoCredentials = (type: 'entrepreneur' | 'investor') => {
+    if (type === 'entrepreneur') {
+      setEmail('sarah@techwave.io');
+      setPassword('password123');
+    } else {
+      setEmail('michael@vcinnovate.com');
+      setPassword('password123');
     }
   };
 
@@ -101,7 +111,45 @@ export const LoginPage: React.FC = () => {
             </Button>
           </form>
 
+           <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Demo Accounts</span>
+              </div>
+            </div>
+            
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <Button
+                variant="outline"
+                onClick={() => fillDemoCredentials('entrepreneur')}
+                leftIcon={<Building2 size={16} />}
+              >
+                Entrepreneur Demo
+              </Button>
+              
+              <Button
+                variant="outline"
+                onClick={() => fillDemoCredentials('investor')}
+                leftIcon={<CircleDollarSign size={16} />}
+              >
+                Investor Demo
+              </Button>
+            </div>
+          </div>
+
           <div className="mt-6 text-center">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or</span>
+              </div>
+            </div>
+            
             <p className="text-sm text-gray-600">
               Don't have an account?{' '}
               <Link to="/register" className="font-medium text-primary-600 hover:text-primary-500">

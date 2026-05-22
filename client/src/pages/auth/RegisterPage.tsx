@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 
 export const RegisterPage: React.FC = () => {
-  const [fullName, setFullName] = useState('');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -29,8 +29,8 @@ export const RegisterPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await register({ fullName, email, password, role });
-      navigate(role === 'entrepreneur' ? '/dashboard/entrepreneur' : '/dashboard/investor');
+      const user = await register({ name, email, password, role });
+      navigate(user.role === 'entrepreneur' ? '/dashboard/entrepreneur' : '/dashboard/investor');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.');
       setIsLoading(false);
@@ -102,8 +102,8 @@ export const RegisterPage: React.FC = () => {
             <Input
               label="Full name"
               type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               required
               fullWidth
               startAdornment={<User size={18} />}

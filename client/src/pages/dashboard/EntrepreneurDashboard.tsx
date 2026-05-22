@@ -19,7 +19,7 @@ export const EntrepreneurDashboard: React.FC = () => {
   useEffect(() => {
     if (user) {
       // Load collaboration requests
-      const requests = getRequestsForEntrepreneur(user.id);
+      const requests = getRequestsForEntrepreneur(user._id);
       setCollaborationRequests(requests);
     }
   }, [user]);

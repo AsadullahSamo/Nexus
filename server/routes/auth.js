@@ -8,7 +8,7 @@ const router = Router();
 router.post(
   '/register',
   [
-    body('fullName').trim().notEmpty().withMessage('Name is required'),
+    body('name').trim().notEmpty().withMessage('Name is required'),
     body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
     body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
     body('role').isIn(['entrepreneur', 'investor']).withMessage('Role must be entrepreneur or investor'),

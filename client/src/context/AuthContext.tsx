@@ -3,7 +3,7 @@ import api from '../lib/api';
 
 interface User {
   _id: string;
-  fullName: string;
+  name: string;
   email: string;
   role: 'entrepreneur' | 'investor';
   avatar: string | null;
@@ -20,7 +20,7 @@ interface AuthContextValue {
 }
 
 interface RegisterPayload {
-  fullName: string;
+  name: string;
   email: string;
   password: string;
   role: 'entrepreneur' | 'investor';
