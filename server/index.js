@@ -8,6 +8,7 @@ const mongoose = require('mongoose');
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require("./routes/users")
+const meetingRoutes = require('./routes/meetings');
 
 const errorHandler = require('./middlewares/errorHandler')
 
@@ -35,6 +36,8 @@ app.get('/health', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/meetings', meetingRoutes);
+
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000

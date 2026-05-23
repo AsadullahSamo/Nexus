@@ -50,7 +50,7 @@ export interface Document {
 export interface Meeting {
   _id: string;
   title: string;
-  description: string;
+  description: string | null;
   scheduledAt: string;
   duration: number;
   status: 'pending' | 'accepted' | 'rejected' | 'cancelled';
