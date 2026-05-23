@@ -9,6 +9,20 @@ const getUserById = asyncHandler(async (req, res, next) => {
   res.status(200).json({ success: true, user });
 });
 
+const searchUsers = asyncHandler(async (req, res) => {
+  const { q } = req.query;
+  if (!q || q.trim().length < 2) {
+    return res.status(200).json({ success: true, users: [] });
+  }
+
+  const users = await User.find({
+    _id: { $ne: req.user._id },
+    name: { $regex: q, $options: 'i' },
+  }).select('name avatar role').limit(10);
+
+  res.status(200).json({ success: true, users });
+});
+
 const updateProfile = asyncHandler(async (req, res, next) => {
   const { name, bio, avatar } = req.body;
 
@@ -27,4 +41,4 @@ const updateProfile = asyncHandler(async (req, res, next) => {
   res.status(200).json({ success: true, user });
 });
 
-module.exports = { getUserById, updateProfile };
+module.exports = { getUserById, updateProfile, searchUsers };

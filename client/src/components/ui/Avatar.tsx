@@ -3,7 +3,7 @@ import React from 'react';
 export type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface AvatarProps {
-  src: string;
+  src: string | null;
   alt: string;
   size?: AvatarSize;
   className?: string;
@@ -43,7 +43,7 @@ export const Avatar: React.FC<AvatarProps> = ({
   return (
     <div className={`relative inline-block ${className}`}>
       <img
-        src={src}
+        src={src || `https://ui-avatars.com/api/?name=${encodeURIComponent(alt)}&background=random`}
         alt={alt}
         className={`rounded-full object-cover ${sizeClasses[size]}`}
         onError={(e) => {

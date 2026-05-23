@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 
@@ -27,6 +26,7 @@ import { DocumentsPage } from './pages/documents/DocumentsPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
 import { HelpPage } from './pages/help/HelpPage';
 import { DealsPage } from './pages/deals/DealsPage';
+import { MeetingsPage } from './pages/meetings/MeetingsPage';
 
 // Chat Pages
 import { ChatPage } from './pages/chat/ChatPage';
@@ -65,6 +65,7 @@ function App() {
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/help" element={<HelpPage />} />
               <Route path="/deals" element={<DealsPage />} />
+              <Route path="/meetings" element={<MeetingsPage />} />
 
             </Route>
 

@@ -5,7 +5,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
-  avatarUrl: string;
+  avatar?: string;
   bio: string;
   isVerified?: boolean;
   createdAt: string;
@@ -54,7 +54,7 @@ export interface Meeting {
   scheduledAt: string;
   duration: number;
   status: 'pending' | 'accepted' | 'rejected' | 'cancelled';
-  organizer: string;
-  participant: string;
+  organizer: User;
+  participant: User;
   createdAt: string;
 }
