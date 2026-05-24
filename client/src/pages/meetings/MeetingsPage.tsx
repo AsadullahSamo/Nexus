@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Calendar, Clock, Plus, Check, X, Ban } from 'lucide-react';
+import { Calendar, Clock, Plus, Check, X, Ban, Trash2, ChevronDown } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
-import { useMeetings, useScheduleMeeting, useUpdateMeetingStatus } from '../../hooks/useMeetings';
+import { useDeleteMeeting, useMeetings, useScheduleMeeting, useUpdateMeetingStatus } from '../../hooks/useMeetings';
 import { Card, CardHeader, CardBody } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -187,6 +187,7 @@ const ScheduleMeetingForm = ({ onClose }: { onClose: () => void }) => {
   );
 };
 
+
 const MeetingCard = ({ meeting, userId, onUpdateStatus }: {
   meeting: Meeting;
   userId: string;
@@ -254,6 +255,56 @@ const MeetingCard = ({ meeting, userId, onUpdateStatus }: {
       </div>
     </div>
   );
+};
+
+
+{/* cancelled and rejected meetings */}
+const DismissedMeetings = ({ meetings, userId, onUpdateStatus }: {
+  meetings: Meeting[];
+  userId: string;
+  onUpdateStatus: (id: string, status: 'accepted' | 'rejected' | 'cancelled') => void;
+}) => { 
+
+  const [show, setShow] = useState(false);
+  const {mutate: deleteMeeting} = useDeleteMeeting();
+
+  if (meetings.length === 0) return null;
+
+  return (
+      <div>
+        <button
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors"
+          onClick={() => setShow((prev) => !prev)}
+        >
+          <ChevronDown size={14} className={`transition-transform ${show ? 'rotate-180' : ''}`} />
+          {show ? 'Hide' : 'Show'} cancelled & rejected ({meetings.length})
+        </button>
+        {show && (
+          <Card className="mt-3">
+            <CardBody className="divide-y divide-gray-100">
+              {meetings.map((m) => (
+                <div key={m._id} className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <MeetingCard
+                      meeting={m}
+                      userId={userId}
+                      onUpdateStatus={onUpdateStatus}
+                    />
+                  </div>
+                  <button
+                    className="ml-2 p-1.5 text-gray-400 hover:text-error-600 transition-colors flex-shrink-0"
+                    onClick={() => deleteMeeting(m._id)}
+                    title="Delete permanently"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              ))}
+            </CardBody>
+          </Card>
+        )}
+      </div>
+    );
 };
 
 export const MeetingsPage = () => {
@@ -353,6 +404,12 @@ export const MeetingsPage = () => {
               </CardBody>
             </Card>
           )}
+
+          <DismissedMeetings
+            meetings={meetings.filter((m: Meeting) => m.status === 'rejected' || m.status === 'cancelled')}
+            userId={user._id}
+            onUpdateStatus={handleUpdateStatus}
+          />
         </div>
       )}
     </div>

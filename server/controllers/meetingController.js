@@ -83,4 +83,21 @@ const updateMeetingStatus = asyncHandler(async (req, res, next) => {
   res.status(200).json({ success: true, meeting });
 });
 
-module.exports = { scheduleMeeting, getMyMeetings, updateMeetingStatus };
+const deleteMeeting = asyncHandler(async (req, res, next) => {
+  const meeting = await Meeting.findById(req.params.id);
+  if (!meeting) return next(new AppError('Meeting not found', 404));
+
+  const isInvolved =
+    meeting.organizer.toString() === req.user._id.toString() ||
+    meeting.participant.toString() === req.user._id.toString();
+  if (!isInvolved) return next(new AppError('Unauthorized', 403));
+
+  if (!['rejected', 'cancelled'].includes(meeting.status)) {
+    return next(new AppError('Only cancelled or rejected meetings can be deleted', 400));
+  }
+
+  await meeting.deleteOne();
+  res.status(200).json({ success: true, message: 'Meeting deleted' });
+});
+
+module.exports = { scheduleMeeting, getMyMeetings, updateMeetingStatus, deleteMeeting };

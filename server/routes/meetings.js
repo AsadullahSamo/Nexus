@@ -1,6 +1,6 @@
 const { Router } = require('express');
 const { body } = require('express-validator');
-const { scheduleMeeting, getMyMeetings, updateMeetingStatus } = require('../controllers/meetingController');
+const { scheduleMeeting, getMyMeetings, updateMeetingStatus, deleteMeeting } = require('../controllers/meetingController');
 const authenticate = require('../middlewares/auth');
 
 const router = Router();
@@ -36,5 +36,7 @@ router.patch(
   ],
   updateMeetingStatus
 );
+
+router.delete('/:id', deleteMeeting);
 
 module.exports = router;

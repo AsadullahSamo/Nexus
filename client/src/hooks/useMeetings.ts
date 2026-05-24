@@ -28,6 +28,10 @@ const updateMeetingStatus = async ({
   return res.data.meeting;
 };
 
+const deleteMeeting = async (id: string) => {
+  await api.delete(`/meetings/${id}`);
+}
+
 export const useMeetings = () =>
   useQuery({
     queryKey: ['meetings'],
@@ -46,6 +50,14 @@ export const useUpdateMeetingStatus = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateMeetingStatus,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['meetings'] }),
+  });
+};
+
+export const useDeleteMeeting = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteMeeting,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['meetings'] }),
   });
 };
