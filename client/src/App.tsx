@@ -27,6 +27,7 @@ import { SettingsPage } from './pages/settings/SettingsPage';
 import { HelpPage } from './pages/help/HelpPage';
 import { DealsPage } from './pages/deals/DealsPage';
 import { MeetingsPage } from './pages/meetings/MeetingsPage';
+import { VideoCallPage } from './pages/video-call/VideoCallPage';
 
 // Chat Pages
 import { ChatPage } from './pages/chat/ChatPage';
@@ -39,6 +40,8 @@ function App() {
           {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+
+          <Route path="/video-call/:roomId" element={<VideoCallPage />} />
 
             <Route element={<DashboardLayout />}>
 
@@ -66,8 +69,8 @@ function App() {
               <Route path="/help" element={<HelpPage />} />
               <Route path="/deals" element={<DealsPage />} />
               <Route path="/meetings" element={<MeetingsPage />} />
-
             </Route>
+
 
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<Navigate to="/login" replace />} />

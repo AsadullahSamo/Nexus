@@ -11,7 +11,7 @@ export const MessagesPage: React.FC = () => {
   
   if (!user) return null;
   
-  const conversations = getConversationsForUser(user.id);
+  const conversations = getConversationsForUser(user._id);
   
   return (
     <div className="h-[calc(100vh-8rem)] bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden animate-fade-in">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Send, Phone, Video, Info, Smile } from 'lucide-react';
 import { Avatar } from '../../components/ui/Avatar';
 import { Button } from '../../components/ui/Button';
@@ -21,18 +21,19 @@ export const ChatPage: React.FC = () => {
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   
   const chatPartner = userId ? findUserById(userId) : null;
+  const navigate = useNavigate();
   
   useEffect(() => {
     // Load conversations
     if (currentUser) {
-      setConversations(getConversationsForUser(currentUser.id));
+      setConversations(getConversationsForUser(currentUser._id));
     }
   }, [currentUser]);
   
   useEffect(() => {
     // Load messages between users
     if (currentUser && userId) {
-      setMessages(getMessagesBetweenUsers(currentUser.id, userId));
+      setMessages(getMessagesBetweenUsers(currentUser._id, userId));
     }
   }, [currentUser, userId]);
   
@@ -47,7 +48,7 @@ export const ChatPage: React.FC = () => {
     if (!newMessage.trim() || !currentUser || !userId) return;
     
     const message = sendMessage({
-      senderId: currentUser.id,
+      senderId: currentUser._id,
       receiverId: userId,
       content: newMessage
     });
@@ -56,7 +57,7 @@ export const ChatPage: React.FC = () => {
     setNewMessage('');
     
     // Update conversations
-    setConversations(getConversationsForUser(currentUser.id));
+    setConversations(getConversationsForUser(currentUser._id));
   };
   
   if (!currentUser) return null;
@@ -102,11 +103,15 @@ export const ChatPage: React.FC = () => {
                 </Button>
                 
                 <Button
-                  variant="ghost"
-                  size="sm"
-                  className="rounded-full p-2"
-                  aria-label="Video call"
-                >
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-full p-2"
+                    aria-label="Video call"
+                    onClick={() => {
+                      const roomId = [currentUser!._id, userId].sort().join('-');
+                      navigate(`/video-call/${roomId}`);
+                    }}
+                  >
                   <Video size={18} />
                 </Button>
                 
@@ -129,7 +134,7 @@ export const ChatPage: React.FC = () => {
                     <ChatMessage
                       key={message.id}
                       message={message}
-                      isCurrentUser={message.senderId === currentUser.id}
+                      isCurrentUser={message.senderId === currentUser._id}
                     />
                   ))}
                   <div ref={messagesEndRef} />

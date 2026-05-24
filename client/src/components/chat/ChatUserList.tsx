@@ -31,7 +31,7 @@ export const ChatUserList: React.FC<ChatUserListProps> = ({ conversations }) => 
           {conversations.length > 0 ? (
             conversations.map(conversation => {
               // Get the other participant (not the current user)
-              const otherParticipantId = conversation.participants.find(id => id !== currentUser.id);
+              const otherParticipantId = conversation.participants.find(id => id !== currentUser._id);
               if (!otherParticipantId) return null;
               
               const otherUser = findUserById(otherParticipantId);
@@ -74,12 +74,12 @@ export const ChatUserList: React.FC<ChatUserListProps> = ({ conversations }) => 
                     <div className="flex justify-between items-center mt-1">
                       {lastMessage && (
                         <p className="text-xs text-gray-600 truncate">
-                          {lastMessage.senderId === currentUser.id ? 'You: ' : ''}
+                          {lastMessage.senderId === currentUser._id ? 'You: ' : ''}
                           {lastMessage.content}
                         </p>
                       )}
                       
-                      {lastMessage && !lastMessage.isRead && lastMessage.senderId !== currentUser.id && (
+                      {lastMessage && !lastMessage.isRead && lastMessage.senderId !== currentUser._id && (
                         <Badge variant="primary" size="sm" rounded>New</Badge>
                       )}
                     </div>
