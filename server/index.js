@@ -1,3 +1,6 @@
+const http = require('http');
+const { Server } = require('socket.io');
+
 require('dotenv').config();
 
 const express = require('express');
@@ -45,8 +48,48 @@ const PORT = process.env.PORT || 5000
 const start = async () => {
   await mongoose.connect(process.env.MONGODB_URI);
   console.log('MongoDB connected');
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+
+  const server = http.createServer(app)
+
+  const io = new Server(server, {
+    cors: {
+      origin: process.env.CLIENT_URL,
+      methods: ['GET', 'POST'],
+    }
+  })
+
+  io.on('connection', (socket) => {
+
+    socket.on('join-room', (roomId) => {
+      socket.join(roomId);
+      socket.to(roomId).emit('user-joined', socket.id);
+    });
+
+    socket.on('offer', ({ roomId, offer }) => {
+      socket.to(roomId).emit('offer', { offer, from: socket.id });
+    });
+
+    socket.on('answer', ({ roomId, answer }) => {
+      socket.to(roomId).emit('answer', { answer, from: socket.id });
+    });
+
+    socket.on('ice-candidate', ({ roomId, candidate }) => {
+      socket.to(roomId).emit('ice-candidate', { candidate, from: socket.id });
+    });
+
+    socket.on('leave-room', (roomId) => {
+      socket.to(roomId).emit('user-left', socket.id);
+      socket.leave(roomId);
+    });
+
+    socket.on('disconnect', () => {
+      io.emit('user-left', socket.id);
+    });
+
+  });
+
+  server.listen(process.env.PORT, () => {
+    console.log(`Server running on port ${process.env.PORT}`);
   });
 };
 
