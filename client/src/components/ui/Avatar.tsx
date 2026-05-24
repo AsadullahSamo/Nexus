@@ -42,20 +42,28 @@ export const Avatar: React.FC<AvatarProps> = ({
   
   return (
     <div className={`relative inline-block ${className}`}>
-      <img
-        src={src || `https://ui-avatars.com/api/?name=${encodeURIComponent(alt)}&background=random`}
-        alt={alt}
-        className={`rounded-full object-cover ${sizeClasses[size]}`}
-        onError={(e) => {
-          // Fallback to initials if image fails to load
-          const target = e.target as HTMLImageElement;
-          target.onerror = null;
-          target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(alt)}&background=random`;
-        }}
-      />
-      
+      {src ? (
+        <img
+          src={src}
+          alt={alt}
+          className={`rounded-full object-cover ${sizeClasses[size]}`}
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.style.display = 'none';
+            target.nextElementSibling?.classList.remove('hidden');
+          }}
+        />
+      ) : null}
+      <div
+        className={`rounded-full bg-primary-100 flex items-center justify-center ${sizeClasses[size]} ${src ? 'hidden' : ''}`}
+      >
+        <span className={`font-semibold text-primary-700 ${size === 'xs' ? 'text-xs' : size === 'sm' ? 'text-xs' : 'text-sm'}`}>
+          {alt.charAt(0).toUpperCase()}
+        </span>
+      </div>
+
       {status && (
-        <span 
+        <span
           className={`absolute bottom-0 right-0 block rounded-full ring-2 ring-white ${statusColors[status]} ${statusSizes[size]}`}
         />
       )}

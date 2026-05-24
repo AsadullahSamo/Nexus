@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Calendar, Clock, Plus, Check, X, Ban, Trash2, ChevronDown } from 'lucide-react';
+import { Calendar, Clock, Plus, Check, X, Ban, Trash2, ChevronDown, Video } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
+import { useCall } from '../../context/CallContext';
 import { useDeleteMeeting, useMeetings, useScheduleMeeting, useUpdateMeetingStatus } from '../../hooks/useMeetings';
 import { Card, CardHeader, CardBody } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -196,6 +197,8 @@ const MeetingCard = ({ meeting, userId, onUpdateStatus }: {
   const isOrganizer = (meeting.organizer as any)._id === userId;
   const other = isOrganizer ? meeting.participant : meeting.organizer;
 
+  const { initiateCall } = useCall();
+
   return (
     <div className="flex items-start justify-between p-4 hover:bg-gray-50 rounded-lg transition-colors">
       <div className="flex items-start gap-4">
@@ -252,6 +255,25 @@ const MeetingCard = ({ meeting, userId, onUpdateStatus }: {
             <Ban size={14} />
         </Button>
         ) : null}
+
+        {meeting.status === 'accepted' && (
+          <button
+            onClick={() =>
+              initiateCall(
+                (other as any)._id,
+                {
+                  _id: (other as any)._id,
+                  name: (other as any).name,
+                  avatar: (other as any).avatar,
+                }
+              )
+            }
+            className="p-2 rounded-full bg-primary-600 hover:bg-primary-700 transition-colors"
+            title="Start video call"
+          >
+            <Video size={16} className="text-white" />
+          </button>
+        )}
       </div>
     </div>
   );

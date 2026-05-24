@@ -58,7 +58,28 @@ const start = async () => {
     }
   })
 
+  const onlineUsers = new Map();
+
   io.on('connection', (socket) => {
+
+    socket.on('user-online', (userId) => {
+      onlineUsers.set(userId, socket.id);
+      socket.userId = userId;
+    });
+
+    socket.on('call-request', ({ toUserId, fromUser, roomId }) => {
+      const receiverSocketId = onlineUsers.get(toUserId);
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit('incoming-call', { fromUser, roomId });
+      }
+    });
+
+   socket.on('call-declined', ({ toUserId }) => {
+      const callerSocketId = onlineUsers.get(toUserId);
+      if (callerSocketId) {
+        io.to(callerSocketId).emit('call-declined');
+      }
+    });
 
     socket.on('join-room', (roomId) => {
       socket.join(roomId);
@@ -83,9 +104,11 @@ const start = async () => {
     });
 
     socket.on('disconnect', () => {
+      if (socket.userId) {
+        onlineUsers.delete(socket.userId);
+      }
       io.emit('user-left', socket.id);
     });
-
   });
 
   server.listen(process.env.PORT, () => {

@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
 import { AuthProvider } from './context/AuthContext';
+import { CallProvider } from './context/CallContext';
 
 // Layouts
 import { DashboardLayout } from './components/layout/DashboardLayout';
@@ -36,45 +38,47 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+        <CallProvider>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
 
-          <Route path="/video-call/:roomId" element={<VideoCallPage />} />
+              <Route path="/video-call/:roomId" element={<VideoCallPage />} />
 
-            <Route element={<DashboardLayout />}>
+                <Route element={<DashboardLayout />}>
 
-              {/* Entrepreneur only */}
-              <Route element={<RoleGuard allowedRole="entrepreneur" />}>
-                <Route path="/dashboard/entrepreneur" element={<EntrepreneurDashboard />} />
-              </Route>
+                  {/* Entrepreneur only */}
+                  <Route element={<RoleGuard allowedRole="entrepreneur" />}>
+                    <Route path="/dashboard/entrepreneur" element={<EntrepreneurDashboard />} />
+                  </Route>
 
-              {/* Investor only */}
-              <Route element={<RoleGuard allowedRole="investor" />}>
-                <Route path="/dashboard/investor" element={<InvestorDashboard />} />
-              </Route>
+                  {/* Investor only */}
+                  <Route element={<RoleGuard allowedRole="investor" />}>
+                    <Route path="/dashboard/investor" element={<InvestorDashboard />} />
+                  </Route>
 
-              {/* Shared protected routes */}
-              <Route path="/profile/entrepreneur/:id" element={<EntrepreneurProfile />} />
-              <Route path="/profile/investor/:id" element={<InvestorProfile />} />
-              <Route path="/investors" element={<InvestorsPage />} />
-              <Route path="/entrepreneurs" element={<EntrepreneursPage />} />
-              <Route path="/messages" element={<MessagesPage />} />
-              <Route path="/chat" element={<ChatPage />} />
-              <Route path="/chat/:userId" element={<ChatPage />} />
-              <Route path="/notifications" element={<NotificationsPage />} />
-              <Route path="/documents" element={<DocumentsPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/help" element={<HelpPage />} />
-              <Route path="/deals" element={<DealsPage />} />
-              <Route path="/meetings" element={<MeetingsPage />} />
-            </Route>
+                  {/* Shared protected routes */}
+                  <Route path="/profile/entrepreneur/:id" element={<EntrepreneurProfile />} />
+                  <Route path="/profile/investor/:id" element={<InvestorProfile />} />
+                  <Route path="/investors" element={<InvestorsPage />} />
+                  <Route path="/entrepreneurs" element={<EntrepreneursPage />} />
+                  <Route path="/messages" element={<MessagesPage />} />
+                  <Route path="/chat" element={<ChatPage />} />
+                  <Route path="/chat/:userId" element={<ChatPage />} />
+                  <Route path="/notifications" element={<NotificationsPage />} />
+                  <Route path="/documents" element={<DocumentsPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/help" element={<HelpPage />} />
+                  <Route path="/deals" element={<DealsPage />} />
+                  <Route path="/meetings" element={<MeetingsPage />} />
+                </Route>
 
 
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
+              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
+        </CallProvider>
       </Router>
     </AuthProvider>
   );
