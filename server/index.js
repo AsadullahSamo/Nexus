@@ -11,6 +11,8 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require("./routes/users")
 const meetingRoutes = require('./routes/meetings');
 const messageRoutes = require('./routes/messages');
+const documentRoutes = require('./routes/documents');
+
 
 const errorHandler = require('./middlewares/errorHandler')
 const initSocket = require('./socket')
@@ -31,6 +33,7 @@ if(process.env.NODE_ENV === 'development') {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static('uploads'));
 
 
 app.get('/health', (req, res) => {
@@ -41,6 +44,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/meetings', meetingRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/documents', documentRoutes);
+
 
 app.use(errorHandler);
 
