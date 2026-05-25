@@ -1,85 +1,68 @@
-import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
-import { ChatConversation } from '../../types';
+import { useAuth } from '../../context/AuthContext';
+import { useConversations } from '../../hooks/useMessages';
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
-import { findUserById } from '../../data/users';
-import { useAuth } from '../../context/AuthContext';
 
-interface ChatUserListProps {
-  conversations: ChatConversation[];
-}
-
-export const ChatUserList: React.FC<ChatUserListProps> = ({ conversations }) => {
+export const ChatUserList = () => {
   const navigate = useNavigate();
   const { userId: activeUserId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
-  
+  const { data: conversations = [], isLoading } = useConversations();
+
   if (!currentUser) return null;
-  
-  const handleSelectUser = (userId: string) => {
-    navigate(`/chat/${userId}`);
-  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-primary-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white border-r border-gray-200 w-full md:w-64 overflow-y-auto">
       <div className="py-4">
         <h2 className="px-4 text-lg font-semibold text-gray-800 mb-4">Messages</h2>
-        
         <div className="space-y-1">
           {conversations.length > 0 ? (
-            conversations.map(conversation => {
-              // Get the other participant (not the current user)
-              const otherParticipantId = conversation.participants.find(id => id !== currentUser._id);
-              if (!otherParticipantId) return null;
+            conversations.map((conversation: any) => {
               
-              const otherUser = findUserById(otherParticipantId);
-              if (!otherUser) return null;
-              
-              const lastMessage = conversation.lastMessage;
-              const isActive = activeUserId === otherParticipantId;
-              
+              const isCurrentUserSender = conversation.sender._id === currentUser._id;
+              const other = isCurrentUserSender ? conversation.receiver : conversation.sender;
+              const isActive = activeUserId === other._id;
+
               return (
                 <div
-                  key={conversation.id}
+                  key={conversation._id}
+                  onClick={() => navigate(`/chat/${other._id}`)}
                   className={`px-4 py-3 flex cursor-pointer transition-colors duration-200 ${
                     isActive
                       ? 'bg-primary-50 border-l-4 border-primary-600'
                       : 'hover:bg-gray-50 border-l-4 border-transparent'
                   }`}
-                  onClick={() => handleSelectUser(otherUser.id)}
                 >
                   <Avatar
-                    src={otherUser.avatarUrl}
-                    alt={otherUser.name}
+                    src={other.avatar}
+                    alt={other.name}
                     size="md"
-                    status={otherUser.isOnline ? 'online' : 'offline'}
                     className="mr-3 flex-shrink-0"
                   />
-                  
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-baseline">
                       <h3 className="text-sm font-medium text-gray-900 truncate">
-                        {otherUser.name}
+                        {other.name}
                       </h3>
-                      
-                      {lastMessage && (
-                        <span className="text-xs text-gray-500">
-                          {formatDistanceToNow(new Date(lastMessage.timestamp), { addSuffix: false })}
-                        </span>
-                      )}
+                      <span className="text-xs text-gray-500 ml-1 flex-shrink-0">
+                        {formatDistanceToNow(new Date(conversation.createdAt), { addSuffix: false })}
+                      </span>
                     </div>
-                    
                     <div className="flex justify-between items-center mt-1">
-                      {lastMessage && (
-                        <p className="text-xs text-gray-600 truncate">
-                          {lastMessage.senderId === currentUser._id ? 'You: ' : ''}
-                          {lastMessage.content}
-                        </p>
-                      )}
-                      
-                      {lastMessage && !lastMessage.isRead && lastMessage.senderId !== currentUser._id && (
+                      <p className="text-xs text-gray-600 truncate">
+                        {isCurrentUserSender ? 'You: ' : ''}{conversation.content}
+                      </p>
+                      {!conversation.isRead && !isCurrentUserSender && (
                         <Badge variant="primary" size="sm" rounded>New</Badge>
                       )}
                     </div>
