@@ -10,6 +10,7 @@ const mongoose = require('mongoose');
 const authRoutes = require('./routes/auth');
 const userRoutes = require("./routes/users")
 const meetingRoutes = require('./routes/meetings');
+const messageRoutes = require('./routes/messages');
 
 const errorHandler = require('./middlewares/errorHandler')
 const initSocket = require('./socket')
@@ -39,6 +40,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/meetings', meetingRoutes);
+app.use('/api/messages', messageRoutes);
 
 app.use(errorHandler);
 

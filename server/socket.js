@@ -52,10 +52,19 @@ const initSocket = (server) => {
       socket.leave(roomId);
     });
 
+    // messages
+    socket.on('send-message', ({ receiverId, message }) => {
+      const receiverSocketId = onlineUsers.get(receiverId);
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit('new-message', message);
+      }
+    });
+
     socket.on('disconnect', () => {
       if (socket.userId) onlineUsers.delete(socket.userId);
       io.emit('user-left', socket.id);
     });
+   
   });
 };
 
