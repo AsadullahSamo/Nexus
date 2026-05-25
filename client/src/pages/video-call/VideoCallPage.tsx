@@ -101,7 +101,7 @@ export const VideoCallPage = () => {
         if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
         peerConnectionRef.current?.close();
         peerConnectionRef.current = null;
-        setTimeout(() => navigate(-1), 1500);
+        setTimeout(() => navigate('/meetings'), 1500);
       };
 
       socket.on('user-joined', handleUserJoined);
@@ -130,7 +130,7 @@ export const VideoCallPage = () => {
   }, [roomId]);
 
   useEffect(() => {
-    const handler = () => setTimeout(() => navigate(-1), 2000);
+    const handler = () => setTimeout(() => navigate('/meetings'), 2000);
     window.addEventListener('call:declined', handler);
     return () => window.removeEventListener('call:declined', handler);
   }, [navigate]);
@@ -149,7 +149,7 @@ export const VideoCallPage = () => {
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
     socket.emit('leave-room', roomId);
     peerConnectionRef.current?.close();
-    navigate(-1);
+    navigate('/meetings');
   };
 
   return (

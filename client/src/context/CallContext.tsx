@@ -45,12 +45,6 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
       socket.emit('user-online', userRef.current._id);
     };
 
-    if (!socket.connected) {
-      socket.connect();
-    } else {
-      connectAndRegister();
-    }
-
     socket.off('connect');
     socket.off('incoming-call');
     socket.off('call-declined');
@@ -66,6 +60,12 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
       window.dispatchEvent(new Event('call:declined'));
       setTimeout(() => setCallWasDeclined(false), 3000);
     });
+
+    if (!socket.connected) {
+      socket.connect();
+    } else {
+      connectAndRegister();
+    }
 
     return () => {
       socket.off('connect', connectAndRegister);

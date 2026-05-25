@@ -1,12 +1,10 @@
-const http = require('http');
-const { Server } = require('socket.io');
-
 require('dotenv').config();
 
+const http = require('http');
 const express = require('express');
 const cors = require('cors');
-const morgan = require('morgan');
 const helmet = require('helmet');
+const morgan = require('morgan');
 const mongoose = require('mongoose');
 
 const authRoutes = require('./routes/auth');
@@ -14,6 +12,7 @@ const userRoutes = require("./routes/users")
 const meetingRoutes = require('./routes/meetings');
 
 const errorHandler = require('./middlewares/errorHandler')
+const initSocket = require('./socket')
 
 const app = express();
 
@@ -50,66 +49,7 @@ const start = async () => {
   console.log('MongoDB connected');
 
   const server = http.createServer(app)
-
-  const io = new Server(server, {
-    cors: {
-      origin: process.env.CLIENT_URL,
-      methods: ['GET', 'POST'],
-    }
-  })
-
-  const onlineUsers = new Map();
-
-  io.on('connection', (socket) => {
-
-    socket.on('user-online', (userId) => {
-      onlineUsers.set(userId, socket.id);
-      socket.userId = userId;
-    });
-
-    socket.on('call-request', ({ toUserId, fromUser, roomId }) => {
-      const receiverSocketId = onlineUsers.get(toUserId);
-      if (receiverSocketId) {
-        io.to(receiverSocketId).emit('incoming-call', { fromUser, roomId });
-      }
-    });
-
-   socket.on('call-declined', ({ toUserId }) => {
-      const callerSocketId = onlineUsers.get(toUserId);
-      if (callerSocketId) {
-        io.to(callerSocketId).emit('call-declined');
-      }
-    });
-
-    socket.on('join-room', (roomId) => {
-      socket.join(roomId);
-      socket.to(roomId).emit('user-joined', socket.id);
-    });
-
-    socket.on('offer', ({ roomId, offer }) => {
-      socket.to(roomId).emit('offer', { offer, from: socket.id });
-    });
-
-    socket.on('answer', ({ roomId, answer }) => {
-      socket.to(roomId).emit('answer', { answer, from: socket.id });
-    });
-
-    socket.on('ice-candidate', ({ roomId, candidate }) => {
-      socket.to(roomId).emit('ice-candidate', { candidate, from: socket.id });
-    });
-
-    socket.on('leave-room', (roomId) => {
-      socket.to(roomId).emit('user-left', socket.id);
-      socket.leave(roomId);
-    });
-
-    socket.on('disconnect', () => {
-      if (socket.userId) {
-        onlineUsers.delete(socket.userId);
-      }
-      io.emit('user-left', socket.id);
-    });
-  });
+  initSocket(server)
 
   server.listen(process.env.PORT, () => {
     console.log(`Server running on port ${process.env.PORT}`);
