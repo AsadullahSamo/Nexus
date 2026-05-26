@@ -11,6 +11,10 @@ import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
 import { Meeting } from '../../types';
 import api from '../../lib/api';
+import { Calendar as BigCalendar, dateFnsLocalizer, View } from 'react-big-calendar';
+import { format, parse, startOfWeek, getDay } from 'date-fns';
+import { enUS } from 'date-fns/locale';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
 
 interface UserResult {
   _id: string;
@@ -18,6 +22,22 @@ interface UserResult {
   avatar: string | null;
   role: string;
 }
+
+type CalendarEvent = {
+  id: string;
+  title: string;
+  start: Date;
+  end: Date;
+  resource: Meeting;
+};
+
+const localizer = dateFnsLocalizer({
+  format,
+  parse,
+  startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 0 }),
+  getDay,
+  locales: { 'en-US': enUS },
+});
 
 const statusVariant: Record<Meeting['status'], 'primary' | 'success' | 'error' | 'gray'> = {
   pending: 'primary',
@@ -334,6 +354,8 @@ export const MeetingsPage = () => {
   const { data: meetings = [], isLoading } = useMeetings();
   const { mutate: updateStatus } = useUpdateMeetingStatus();
   const [showForm, setShowForm] = useState(false);
+  const [view, setView] = useState<'list' | 'calendar'>('list');
+  const [calendarView, setCalendarView] = useState<View>('month');
 
   if (!user) return null;
 
@@ -351,6 +373,19 @@ export const MeetingsPage = () => {
     updateStatus({ id, status });
   };
 
+  const calendarEvents: CalendarEvent[] = meetings.filter((m: Meeting) => m.status === 'accepted')
+  .map((m: Meeting) => {
+    const isOrganizer = (m.organizer as any)._id === user._id;
+    const other = isOrganizer ? m.participant : m.organizer;
+    return {
+      id: m._id,
+      title: `${m.title} — ${(other as any).name}`,
+      start: new Date(m.scheduledAt),
+      end: new Date(new Date(m.scheduledAt).getTime() + m.duration * 60000),
+      resource: m,
+    };
+  });
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
@@ -358,9 +393,33 @@ export const MeetingsPage = () => {
           <h1 className="text-2xl font-bold text-gray-900">Meetings</h1>
           <p className="text-gray-600">Schedule and manage your meetings</p>
         </div>
-        <Button leftIcon={<Plus size={18} />} onClick={() => setShowForm((prev) => !prev)}>
-          {showForm ? 'Cancel' : 'Schedule Meeting'}
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="flex rounded-md border border-gray-200 overflow-hidden">
+            <button
+              onClick={() => setView('list')}
+              className={`px-3 py-1.5 text-sm transition-colors ${
+                view === 'list'
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              List
+            </button>
+            <button
+              onClick={() => setView('calendar')}
+              className={`px-3 py-1.5 text-sm transition-colors ${
+                view === 'calendar'
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              Calendar
+            </button>
+          </div>
+          <Button leftIcon={<Plus size={18} />} onClick={() => setShowForm((prev) => !prev)}>
+            {showForm ? 'Cancel' : 'Schedule Meeting'}
+          </Button>
+        </div>
       </div>
 
       {showForm && <ScheduleMeetingForm onClose={() => setShowForm(false)} />}
@@ -369,6 +428,39 @@ export const MeetingsPage = () => {
         <div className="flex justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-600" />
         </div>
+      ) : view === 'calendar' ? (
+        <Card>
+          <CardBody>
+            <div style={{ height: 600 }}>
+              <BigCalendar
+                localizer={localizer}
+                events={calendarEvents}
+                view={calendarView}
+                onView={setCalendarView}
+                startAccessor="start"
+                endAccessor="end"
+                style={{ height: '100%' }}
+                eventPropGetter={() => ({
+                  style: {
+                    backgroundColor: '#1D4ED8',
+                    borderRadius: '4px',
+                    border: 'none',
+                    color: 'white',
+                    fontSize: '12px',
+                  },
+                })}
+                onSelectEvent={(event) => {
+                  const meeting = event.resource as Meeting;
+                  const isOrganizer = (meeting.organizer as any)._id === user._id;
+                  const other = isOrganizer ? meeting.participant : meeting.organizer;
+                  alert(
+                    `${meeting.title}\nWith: ${(other as any).name}\n${new Date(meeting.scheduledAt).toLocaleString()}\nDuration: ${meeting.duration} min`
+                  );
+                }}
+              />
+            </div>
+          </CardBody>
+        </Card>
       ) : (
         <div className="space-y-6">
           {pending.length > 0 && (
