@@ -43,6 +43,10 @@ const documentSchema = new mongoose.Schema(
       enum: ['active', 'archived'],
       default: 'active',
     },
+    signature: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true }
 );

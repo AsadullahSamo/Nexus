@@ -1,12 +1,15 @@
 import { useRef, useState } from 'react';
-import { FileText,  Upload,  Download,  Trash2,  FileImage,  FileSpreadsheet, Eye, X} from 'lucide-react';
+import { FileText,  Upload,  Download,  Trash2,  FileImage,  FileSpreadsheet, Eye, X, PenLine} from 'lucide-react';
 import { Card, CardHeader, CardBody } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { useDocuments,  useUploadDocument,  useDeleteDocument} from '../../hooks/useDocuments';
+import { useSaveSignature } from '../../hooks/useDocuments';
+import SignatureCanvas from 'react-signature-canvas';
 import { Document, Page, pdfjs } from 'react-pdf'
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
+import { useAuth } from '../../context/AuthContext';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
@@ -46,14 +49,19 @@ const getFileIcon = (mimetype: string) => {
 
 export const DocumentsPage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sigPadRef = useRef<SignatureCanvas>(null);
+
   const [previewDoc, setPreviewDoc] = useState<{ id: string; name: string } | null>(null);
   const [numPages, setNumPages] = useState<number>(0);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [signDoc, setSignDoc] = useState<{ id: string; name: string } | null>(null);
 
-  const {data: documents = [], isLoading} = useDocuments();
+
+  const {user} = useAuth()
+  const {data: documents = [], isLoading} = useDocuments(user?._id || '');
   const {mutate: uploadDocument,isPending: isUploading} = useUploadDocument();
-
   const {mutate: deleteDocument} = useDeleteDocument();
+  const {mutate: saveSignature, isPending: isSaving} = useSaveSignature();
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -168,6 +176,12 @@ export const DocumentsPage = () => {
                       <Badge variant="gray" size="sm">
                         {getFileType(doc.mimetype)}
                       </Badge>
+
+                      {doc.signature ? (
+                        <Badge variant="success" size="sm">Signed</Badge>
+                      ) : (
+                        <Badge variant="error" size="sm">Unsigned</Badge>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
@@ -200,6 +214,21 @@ export const DocumentsPage = () => {
                       </Button>
                     )}
 
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="p-2"
+                      aria-label="Sign"
+                      disabled={doc.signature}
+                      title={doc.signature ? "Already signed" : "Sign document"}
+                      onClick={() => {
+                        if (doc.signature) return;
+                        setSignDoc({ id: doc._id, name: doc.name });
+                      }}
+                    >
+                      <PenLine size={18} />
+                    </Button>
+                    
                     <Button
                       variant="ghost"
                       size="sm"
@@ -253,6 +282,68 @@ export const DocumentsPage = () => {
 
                     <div className="px-5 py-3 border-t border-gray-200 text-xs text-gray-500 text-right">
                       {numPages} page{numPages !== 1 ? 's' : ''}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {signDoc && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+                  <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col">
+                    <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200">
+                      <h3 className="text-sm font-medium text-gray-900">
+                        Sign: {signDoc.name}
+                      </h3>
+                      <button
+                        onClick={() => setSignDoc(null)}
+                        className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+                      >
+                        <X size={18} className="text-gray-500" />
+                      </button>
+                    </div>
+
+                    <div className="p-5">
+                      <p className="text-sm text-gray-500 mb-3">
+                        Draw your signature below
+                      </p>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
+                        <SignatureCanvas
+                          ref={sigPadRef}
+                          penColor="black"
+                          canvasProps={{
+                            width: 460,
+                            height: 180,
+                            className: 'w-full',
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center px-5 py-3 border-t border-gray-200">
+                      <button
+                        onClick={() => sigPadRef.current?.clear()}
+                        className="text-sm text-gray-500 hover:text-gray-700"
+                      >
+                        Clear
+                      </button>
+                      <div className="flex gap-3">
+                        <Button variant="outline" onClick={() => setSignDoc(null)}>
+                          Cancel
+                        </Button>
+                        <Button
+                          isLoading={isSaving}
+                          onClick={() => {
+                            if (!sigPadRef.current || sigPadRef.current.isEmpty()) return;
+                            const signature = sigPadRef.current.toDataURL('image/png');
+                            saveSignature(
+                              { id: signDoc.id, signature },
+                              { onSuccess: () => setSignDoc(null) }
+                            );
+                          }}
+                        >
+                          Save Signature
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>

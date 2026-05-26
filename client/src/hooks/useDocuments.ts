@@ -17,10 +17,16 @@ const deleteDocument = async (id: string) => {
   await api.delete(`/documents/${id}`);
 };
 
-export const useDocuments = () =>
+const saveSignature = async ({ id, signature }: { id: string; signature: string }) => {
+  const res = await api.patch(`/documents/${id}/signature`, { signature });
+  return res.data.document;
+};
+
+export const useDocuments = (userId: string | undefined) =>
   useQuery({
-    queryKey: ['documents'],
+    queryKey: ['documents', userId],
     queryFn: fetchDocuments,
+    enabled: !!userId,
   });
 
 export const useUploadDocument = () => {
@@ -35,6 +41,14 @@ export const useDeleteDocument = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteDocument,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['documents'] }),
+  });
+};
+
+export const useSaveSignature = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: saveSignature,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['documents'] }),
   });
 };

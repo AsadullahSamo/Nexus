@@ -61,4 +61,27 @@ const downloadDocument = asyncHandler(async (req, res, next) => {
   res.download(filePath, document.originalName);
 });
 
-module.exports = { uploadDocument, getMyDocuments, deleteDocument, downloadDocument };
+const saveSignature = asyncHandler(async (req, res, next) => {
+  const { signature } = req.body;
+
+  if (!signature) return next(new AppError('Signature is required', 400));
+  
+
+  const document = await Document.findById(req.params.id);
+  if (!document) return next(new AppError('Document not found', 404));
+  
+  if (document.uploadedBy.toString() !== req.user._id.toString()) {
+    return next(new AppError('Not authorized to sign this document', 403));
+  }
+
+  if (document.signature) {
+    return next(new AppError('Document already signed', 400));
+  }
+
+  document.signature = signature;
+  await document.save();
+
+  res.status(200).json({ success: true, document });
+});
+
+module.exports = { uploadDocument, getMyDocuments, deleteDocument, downloadDocument, saveSignature };
