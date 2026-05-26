@@ -1,9 +1,14 @@
-import { useRef } from 'react';
-import { FileText,  Upload,  Download,  Trash2,  FileImage,  FileSpreadsheet} from 'lucide-react';
+import { useRef, useState } from 'react';
+import { FileText,  Upload,  Download,  Trash2,  FileImage,  FileSpreadsheet, Eye, X} from 'lucide-react';
 import { Card, CardHeader, CardBody } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { useDocuments,  useUploadDocument,  useDeleteDocument} from '../../hooks/useDocuments';
+import { Document, Page, pdfjs } from 'react-pdf'
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 const formatBytes = (bytes: number) => {
   if (bytes < 1024) return `${bytes} B`;
@@ -41,6 +46,9 @@ const getFileIcon = (mimetype: string) => {
 
 export const DocumentsPage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [previewDoc, setPreviewDoc] = useState<{ id: string; name: string } | null>(null);
+  const [numPages, setNumPages] = useState<number>(0);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const {data: documents = [], isLoading} = useDocuments();
   const {mutate: uploadDocument,isPending: isUploading} = useUploadDocument();
@@ -66,29 +74,42 @@ export const DocumentsPage = () => {
 
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/documents/${id}/download`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if (!res.ok) {
-        throw new Error('Download failed');
-      }
+      if (!res.ok) throw new Error('Download failed');
 
       const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob);
 
       const a = document.createElement('a');
       a.href = url;
       a.download = name;
       a.click();
 
-      window.URL.revokeObjectURL(url);
+      URL.revokeObjectURL(url);
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const handlePreview = async (id: string, name: string, mimetype: string) => {
+    if (!mimetype.includes('pdf')) return;
+    const token = localStorage.getItem('token');
+    const res = await fetch(
+      `${import.meta.env.VITE_API_URL}/documents/${id}/download`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    if (!res.ok) {
+      console.error('Failed to fetch document for preview');
+      return;
+    }
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    setPreviewUrl(url);
+    setPreviewDoc({ id, name });
   };
 
   return (
@@ -167,6 +188,18 @@ export const DocumentsPage = () => {
                       <Download size={18} />
                     </Button>
 
+                    {doc.mimetype === 'application/pdf' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="p-2"
+                        aria-label="Preview"
+                        onClick={() => handlePreview(doc._id, doc.name, doc.mimetype)}
+                      >
+                        <Eye size={18} />
+                      </Button>
+                    )}
+
                     <Button
                       variant="ghost"
                       size="sm"
@@ -179,6 +212,51 @@ export const DocumentsPage = () => {
                   </div>
                 </div>
               ))}
+              {previewDoc && previewUrl && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+                  <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+                    <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200">
+                      <h3 className="text-sm font-medium text-gray-900 truncate">{previewDoc.name}</h3>
+                      <button
+                        onClick={() => {
+                          setPreviewDoc(null);
+                          if (previewUrl) URL.revokeObjectURL(previewUrl);
+                          setPreviewUrl(null);
+                          setNumPages(0);
+                        }}
+                        className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+                      >
+                        <X size={18} className="text-gray-500" />
+                      </button>
+                    </div>
+
+                    <div className="overflow-y-auto flex-1 flex flex-col items-center p-4 bg-gray-50">
+                      <Document
+                        file={previewUrl}
+                        onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+                        loading={
+                          <div className="flex justify-center py-12">
+                            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-600" />
+                          </div>
+                        }
+                      >
+                        {Array.from({ length: numPages }, (_, i) => (
+                          <Page
+                            key={i + 1}
+                            pageNumber={i + 1}
+                            width={700}
+                            className="mb-4 shadow-sm"
+                          />
+                        ))}
+                      </Document>
+                    </div>
+
+                    <div className="px-5 py-3 border-t border-gray-200 text-xs text-gray-500 text-right">
+                      {numPages} page{numPages !== 1 ? 's' : ''}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-center py-12">
