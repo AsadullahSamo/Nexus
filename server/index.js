@@ -3,7 +3,6 @@ require('dotenv').config();
 const http = require('http');
 const express = require('express');
 const cors = require('cors');
-const mongoSanitize = require('express-mongo-sanitize');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
@@ -15,6 +14,7 @@ const messageRoutes = require('./routes/messages');
 const documentRoutes = require('./routes/documents');
 
 const { apiLimiter } = require('./middlewares/rateLimiter');
+const mongoSanitize = require('./middlewares/sanitize');
 
 const errorHandler = require('./middlewares/errorHandler')
 const initSocket = require('./socket')
@@ -35,7 +35,7 @@ if(process.env.NODE_ENV === 'development') {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(mongoSanitize());
+app.use(mongoSanitize);
 
 
 
