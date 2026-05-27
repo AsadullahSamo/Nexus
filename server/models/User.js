@@ -38,12 +38,26 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    otpCode: {
+      type: String,
+      select: false,
+      default: null,
+    },
+    otpExpiry: {
+      type: Date,
+      select: false,
+      default: null,
+    },
+    otpEnabled: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
 
 userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+  if (!this.isModified('password')) return;
   this.password = await bcrypt.hash(this.password, 12);
 });
 
@@ -54,6 +68,8 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 userSchema.set('toJSON', {
   transform: (_doc, ret) => {
     delete ret.password;
+    delete ret.otpCode;
+    delete ret.otpExpiry;
     return ret;
   },
 });

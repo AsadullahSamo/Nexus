@@ -1,6 +1,6 @@
 const { Router } = require('express');
 const { body } = require('express-validator');
-const { register, login, getMe, changePassword } = require('../controllers/authController');
+const { register, login, getMe, changePassword, generateOtp, verifyOtp } = require('../controllers/authController');
 const authenticate = require('../middlewares/auth');
 const { authLimiter } = require('../middlewares/rateLimiter');
 
@@ -28,6 +28,8 @@ router.post(
   login
 );
 
+router.get('/me', authenticate, getMe);
+
 router.patch(
   '/change-password',
   authenticate,
@@ -38,6 +40,17 @@ router.patch(
   changePassword
 );
 
-router.get('/me', authenticate, getMe);
+router.post('/2fa/generate', authenticate, generateOtp)
+
+router.post(
+  '/2fa/verify',
+  authenticate,
+  [ 
+    body('otpCode')
+    .matches(/^\d{6}$/)
+    .withMessage('OTP must be a 6-digit number')
+  ],
+  verifyOtp
+)
 
 module.exports = router;

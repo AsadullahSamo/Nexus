@@ -25,40 +25,86 @@ export const SettingsPage: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordState, setPasswordState] = useState({ error: '', success: '' });
   const [isPasswordPending, setIsPasswordPending] = useState(false);
+  const [otp, setOtp] = useState({enabled: false, modalOpen: false, input: '', error: '', loading: false, serverOtp: ''});
 
   useEffect(() => {
     if (profile) {
       setName(profile.name ?? '');
       setBio(profile.bio ?? '');
+      setOtp(prev => ({ ...prev, enabled: profile.otpEnabled ?? false }));
     }
   }, [profile]);
 
-  const handleChangePassword = async () => {
-    setPasswordState({ error: '', success: '' });
-
-    if (newPassword !== confirmPassword) {
-      setPasswordState({ error: 'New passwords do not match', success: '' });
-      return;
+  const handleChangePassword = async () => { 
+    setPasswordState({ error: '', success: '' }); 
+    
+    if (newPassword !== confirmPassword) { 
+      setPasswordState({ error: 'New passwords do not match', success: '' }); 
+      return; 
+    } 
+    
+    if (newPassword.length < 6) { 
+      setPasswordState({ error: 'New password must be at least 6 characters', success: '' }); 
+      return; 
+    } 
+    
+    setIsPasswordPending(true); 
+    try { 
+      await api.patch('/auth/change-password', 
+        { currentPassword: currentPassword.trim(), newPassword: newPassword.trim() 
+      }); 
+      setPasswordState({ error: '', success: 'Password updated successfully' }); 
+      setCurrentPassword(''); 
+      setNewPassword(''); 
+      setConfirmPassword(''); 
+    } catch (err: any) { 
+      setPasswordState({ error: err.response?.data?.message ?? 'Failed to update password', success: '' }); 
+    } finally { 
+      setIsPasswordPending(false); 
     }
-    if (newPassword.length < 6) {
-      setPasswordState({ error: 'New password must be at least 6 characters', success: '' });
-      return;
-    }
+  };
 
-    setIsPasswordPending(true);
+  const handleGenerateOtp = async () => {
+    setOtp(prev => ({ ...prev, error: '', loading: true }));
+
     try {
-      await api.patch('/auth/change-password', { 
-        currentPassword: currentPassword.trim(), 
-        newPassword: newPassword.trim()
-      });
-      setPasswordState({ error: '', success: 'Password updated successfully' });
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      const res = await api.post('/auth/2fa/generate');
+
+      setOtp(prev => ({
+        ...prev,
+        modalOpen: true,
+        serverOtp: res.data.otp,
+        loading: false,
+      }));
     } catch (err: any) {
-      setPasswordState({ error: err.response?.data?.message ?? 'Failed to update password', success: '' });
-    } finally {
-      setIsPasswordPending(false);
+      setOtp(prev => ({
+        ...prev,
+        error: err.response?.data?.message ?? 'Failed to generate OTP',
+        loading: false,
+      }));
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    setOtp(prev => ({ ...prev, error: '', loading: true }));
+
+    try {
+      await api.post('/auth/2fa/verify', { otpCode: otp.input });
+
+      setOtp(prev => ({
+        ...prev,
+        enabled: true,
+        modalOpen: false,
+        input: '',
+        serverOtp: '',
+        loading: false,
+      }));
+    } catch (err: any) {
+      setOtp(prev => ({
+        ...prev,
+        error: err.response?.data?.message ?? 'Invalid OTP',
+        loading: false,
+      }));
     }
   };
   
@@ -187,18 +233,48 @@ export const SettingsPage: React.FC = () => {
               <h2 className="text-lg font-medium text-gray-900">Security Settings</h2>
             </CardHeader>
             <CardBody className="space-y-6">
+              
               <div>
                 <h3 className="text-sm font-medium text-gray-900 mb-4">Two-Factor Authentication</h3>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600">
-                      Add an extra layer of security to your account
-                    </p>
-                    <Badge variant="error" className="mt-1">Not Enabled</Badge>
+                    <p className="text-sm text-gray-600">Add an extra layer of security to your account</p>
+                    <Badge variant={otp.enabled ? 'success' : 'error'} className="mt-1">
+                      {otp.enabled ? 'Enabled' : 'Not Enabled'}
+                    </Badge>
                   </div>
-                  <Button variant="outline">Enable</Button>
+                  {!otp.enabled && (
+                    <Button variant="outline" onClick={handleGenerateOtp} isLoading={otp.loading}>
+                      Enable
+                    </Button>
+                  )}
                 </div>
+                {otp.error && <p className="text-sm text-red-600 mt-2">{otp.error}</p>}
               </div>
+
+              {otp.modalOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-lg p-6 w-full max-w-sm space-y-4">
+                    <h3 className="text-lg font-medium text-gray-900">Verify OTP</h3>
+                    <p className="text-sm text-gray-600">
+                      Your OTP
+                    </p>
+                    <p className="text-2xl font-bold tracking-widest text-center text-primary-600">
+                      {otp.serverOtp}
+                    </p>
+                    <Input
+                      label="Enter OTP"
+                      value={otp.input}
+                      onChange={(e) => setOtp(prev => ({ ...prev, input: e.target.value }))}
+                    />
+                    {otp.error && <p className="text-sm text-red-600">{otp.error}</p>}
+                    <div className="flex justify-end gap-3">
+                      <Button variant="outline" onClick={() => setOtp(prev => ({ ...prev, modalOpen: false }))}>Cancel</Button>
+                      <Button onClick={handleVerifyOtp} isLoading={otp.loading}>Verify</Button>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               <div className="pt-6 border-t border-gray-200">
                 <h3 className="text-sm font-medium text-gray-900 mb-4">Change Password</h3>

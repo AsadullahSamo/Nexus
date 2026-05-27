@@ -3,6 +3,7 @@ const { validationResult } = require('express-validator');
 const User = require('../models/User');
 const AppError = require('../utils/AppError');
 const asyncHandler = require("../utils/asyncHandler")
+const bcrypt = require('bcryptjs');
 
 const signToken = (userId) =>
   jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -82,4 +83,45 @@ const changePassword = asyncHandler(async (req, res, next) => {
   })
 })
 
-module.exports = { register, login, getMe, changePassword };
+const generateOtp = asyncHandler(async (req, res, next) => {
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const hashed = await bcrypt.hash(otp, 12);
+
+  const user = await User.findById(req.user.id);
+
+  user.otpCode = hashed;
+  user.otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
+  await user.save();
+  res.status(200).json({ success: true, otp});
+})
+
+const verifyOtp = asyncHandler(async (req, res, next) => {
+  const { otpCode } = req.body;
+
+  const user = await User.findById(req.user.id).select('+otpCode +otpExpiry');
+
+  if(!user.otpCode || !user.otpExpiry) {
+    return next(new AppError('OTP not generated', 400))
+  }
+  
+  if(user.otpExpiry < new Date()) {
+    return next(new AppError('OTP expired', 400))
+  }
+
+  const isMatch = await bcrypt.compare(otpCode, user.otpCode);
+  if (!isMatch) {
+    return next(new AppError('Invalid OTP', 400));
+  }
+
+  await User.findByIdAndUpdate(req.user.id, {
+    otpEnabled: true,
+    otpCode: null,
+    otpExpiry: null,
+  })
+
+  res.status(200).json({success: true, message: '2FA enabled successfully' })
+
+})
+
+module.exports = { register, login, getMe, changePassword, generateOtp, verifyOtp };
