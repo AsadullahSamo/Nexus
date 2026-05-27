@@ -58,7 +58,7 @@ export const Avatar: React.FC<AvatarProps> = ({
         className={`rounded-full bg-primary-100 flex items-center justify-center ${sizeClasses[size]} ${src ? 'hidden' : ''}`}
       >
         <span className={`font-semibold text-primary-700 ${size === 'xs' ? 'text-xs' : size === 'sm' ? 'text-xs' : 'text-sm'}`}>
-          {alt.charAt(0).toUpperCase()}
+          {(alt || '?').charAt(0).toUpperCase()}
         </span>
       </div>
 

@@ -1,6 +1,6 @@
 const { Router } = require('express');
 const { body } = require('express-validator');
-const { register, login, getMe } = require('../controllers/authController');
+const { register, login, getMe, changePassword } = require('../controllers/authController');
 const authenticate = require('../middlewares/auth');
 const { authLimiter } = require('../middlewares/rateLimiter');
 
@@ -26,6 +26,16 @@ router.post(
     body('password').notEmpty().withMessage('Password is required'),
   ],
   login
+);
+
+router.patch(
+  '/change-password',
+  authenticate,
+  [
+    body('currentPassword').notEmpty().withMessage('Current password is required'),
+    body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters')
+  ],
+  changePassword
 );
 
 router.get('/me', authenticate, getMe);

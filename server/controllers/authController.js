@@ -61,4 +61,25 @@ const getMe = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { register, login, getMe };
+const changePassword = asyncHandler(async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return next(new AppError(errors.array()[0].msg, 400));
+  }
+
+  const { currentPassword, newPassword } = req.body;
+
+  const user = await User.findById(req.user.id).select('+password');
+  if (!user || !(await user.comparePassword(currentPassword))) {
+    return next(new AppError('Current password is incorrect', 400));
+  }
+
+  user.password = newPassword
+  await user.save();
+  res.status(200).json({
+    success: true,
+    message: 'Password updated successfully'
+  })
+})
+
+module.exports = { register, login, getMe, changePassword };

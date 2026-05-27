@@ -8,6 +8,8 @@ import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
 import { useAuth } from '../../context/AuthContext';
 
+import api from '../../lib/api';
+
 export const SettingsPage: React.FC = () => {
   
   const { user, updateUser: syncAuthUser } = useAuth();
@@ -18,6 +20,11 @@ export const SettingsPage: React.FC = () => {
 
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordState, setPasswordState] = useState({ error: '', success: '' });
+  const [isPasswordPending, setIsPasswordPending] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -25,6 +32,35 @@ export const SettingsPage: React.FC = () => {
       setBio(profile.bio ?? '');
     }
   }, [profile]);
+
+  const handleChangePassword = async () => {
+    setPasswordState({ error: '', success: '' });
+
+    if (newPassword !== confirmPassword) {
+      setPasswordState({ error: 'New passwords do not match', success: '' });
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPasswordState({ error: 'New password must be at least 6 characters', success: '' });
+      return;
+    }
+
+    setIsPasswordPending(true);
+    try {
+      await api.patch('/auth/change-password', { 
+        currentPassword: currentPassword.trim(), 
+        newPassword: newPassword.trim()
+      });
+      setPasswordState({ error: '', success: 'Password updated successfully' });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: any) {
+      setPasswordState({ error: err.response?.data?.message ?? 'Failed to update password', success: '' });
+    } finally {
+      setIsPasswordPending(false);
+    }
+  };
   
   return (
     <div className="space-y-6 animate-fade-in">
@@ -99,7 +135,7 @@ export const SettingsPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Input
                   label="Name"
-                  defaultValue={user.name}
+                  value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
                 
@@ -167,24 +203,42 @@ export const SettingsPage: React.FC = () => {
               <div className="pt-6 border-t border-gray-200">
                 <h3 className="text-sm font-medium text-gray-900 mb-4">Change Password</h3>
                 <div className="space-y-4">
-                  <Input
-                    label="Current Password"
-                    type="password"
-                  />
                   
-                  <Input
-                    label="New Password"
-                    type="password"
-                  />
-                  
-                  <Input
-                    label="Confirm New Password"
-                    type="password"
-                  />
+                <Input
+                  label="Current Password"
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                />
+
+                <Input
+                  label="New Password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+
+                <Input
+                  label="Confirm New Password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+
+                {passwordState.error && <p className="text-sm text-red-600 ">{passwordState.error}</p>}
+                {passwordState.success && <p className="text-sm text-green-600">{passwordState.success}</p>}
+
                   
                   <div className="flex justify-end">
-                    <Button>Update Password</Button>
+                      <Button 
+                        onClick={handleChangePassword} 
+                        isLoading={isPasswordPending}
+                        disabled={!currentPassword || !newPassword || !confirmPassword}
+                      >
+                        Update Password
+                      </Button>
                   </div>
+
                 </div>
               </div>
             </CardBody>
