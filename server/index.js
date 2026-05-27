@@ -3,6 +3,7 @@ require('dotenv').config();
 const http = require('http');
 const express = require('express');
 const cors = require('cors');
+const mongoSanitize = require('express-mongo-sanitize');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
@@ -13,6 +14,7 @@ const meetingRoutes = require('./routes/meetings');
 const messageRoutes = require('./routes/messages');
 const documentRoutes = require('./routes/documents');
 
+const { apiLimiter } = require('./middlewares/rateLimiter');
 
 const errorHandler = require('./middlewares/errorHandler')
 const initSocket = require('./socket')
@@ -33,6 +35,10 @@ if(process.env.NODE_ENV === 'development') {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(mongoSanitize());
+
+
+
 app.use('/uploads', express.static('uploads'));
 
 
@@ -40,6 +46,7 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
+app.use('/api', apiLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/meetings', meetingRoutes);
@@ -52,15 +59,21 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000
 
 const start = async () => {
-  await mongoose.connect(process.env.MONGODB_URI);
-  console.log('MongoDB connected');
+  try {
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log('MongoDB connected');
 
-  const server = http.createServer(app)
-  initSocket(server)
+    const server = http.createServer(app)
+    initSocket(server)
 
-  server.listen(process.env.PORT, () => {
-    console.log(`Server running on port ${process.env.PORT}`);
-  });
+    server.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error('Failed to connect to MongoDB', err);
+    process.exit(1);
+  }
+  
 };
 
 start();
