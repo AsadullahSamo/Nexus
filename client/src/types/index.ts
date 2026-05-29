@@ -8,8 +8,9 @@ export interface User {
   avatar?: string;
   bio: string;
   isVerified?: boolean;
-  createdAt: string;
-  updatedAt: string;
+  otpEnabled?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 export interface Message {
   id: string;
@@ -56,5 +57,16 @@ export interface Meeting {
   status: 'pending' | 'accepted' | 'rejected' | 'cancelled';
   organizer: User;
   participant: User;
+  createdAt: string;
+}
+
+export interface Transaction {
+  _id: string;
+  from?: { _id: string; name: string; email: string };
+  to?: { _id: string; name: string; email: string };
+  type: 'deposit' | 'withdraw' | 'transfer';
+  amount: number;
+  status: 'pending' | 'completed' | 'failed';
+  stripePaymentIntentId?: string;
   createdAt: string;
 }

@@ -28,6 +28,7 @@ import { DocumentsPage } from './pages/documents/DocumentsPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
 import { HelpPage } from './pages/help/HelpPage';
 import { DealsPage } from './pages/deals/DealsPage';
+import { PaymentsPage } from './pages/payments/PaymentsPage';
 import { MeetingsPage } from './pages/meetings/MeetingsPage';
 import { VideoCallPage } from './pages/video-call/VideoCallPage';
 
@@ -71,6 +72,7 @@ function App() {
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="/help" element={<HelpPage />} />
                   <Route path="/deals" element={<DealsPage />} />
+                  <Route path="/payments" element={<PaymentsPage />} />
                   <Route path="/meetings" element={<MeetingsPage />} />
                 </Route>
 
