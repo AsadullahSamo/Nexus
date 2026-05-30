@@ -26,13 +26,18 @@ const searchUsers = asyncHandler(async (req, res) => {
 const updateProfile = asyncHandler(async (req, res, next) => {
   const { name, bio, avatar } = req.body;
 
+  const updateData = Object.fromEntries(
+    Object.entries({ name, bio, avatar })
+      .filter(([_, value]) => value !== undefined)
+  );
+
   if (req.params.id !== req.user._id.toString()) {
     return next(new AppError('You can only update your own profile', 403));
   }
 
   const user = await User.findByIdAndUpdate(
     req.params.id,
-    { name, bio, avatar },
+    updateData,
     { new: true, runValidators: true }
   );
 

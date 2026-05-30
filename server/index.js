@@ -6,6 +6,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./config/swagger');
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require("./routes/users")
@@ -46,6 +48,8 @@ app.use('/uploads', express.static('uploads'));
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
+
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use('/api', apiLimiter);
 app.use('/api/auth', authRoutes);
