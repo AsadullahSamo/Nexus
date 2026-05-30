@@ -4,7 +4,7 @@ export const entrepreneurs: Entrepreneur[] = [
   {
     id: 'e1',
     name: 'Sarah Johnson',
-    email: 'sarah@techwave.io',
+    email: 'emma@techwave.io',
     role: 'entrepreneur',
     avatarUrl: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
     bio: 'Serial entrepreneur with 10+ years of experience in SaaS and fintech.',

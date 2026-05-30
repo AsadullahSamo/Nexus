@@ -50,7 +50,7 @@ export const Sidebar: React.FC = () => {
   const investorItems = [
     { to: '/dashboard/investor', icon: <Home size={20} />, text: 'Dashboard' },
     { to: '/profile/investor/' + user._id, icon: <CircleDollarSign size={20} />, text: 'My Portfolio' },
-    { to: '/entrepreneurs', icon: <Users size={20} />, text: 'Find Startups' },
+    { to: '/entrepreneurs', icon: <Users size={20} />, text: 'Find Entrepreneurs ' },
     { to: '/messages', icon: <MessageCircle size={20} />, text: 'Messages' },
     { to: '/meetings', icon: <Calendar size={20} />, text: 'Meetings' },
     { to: '/notifications', icon: <Bell size={20} />, text: 'Notifications' },

@@ -30,7 +30,7 @@ export const LoginPage: React.FC = () => {
 
   const fillDemoCredentials = (type: 'entrepreneur' | 'investor') => {
     if (type === 'entrepreneur') {
-      setEmail('sarah@techwave.io');
+      setEmail('emma@techwave.io');
       setPassword('password123');
     } else {
       setEmail('michael@vcinnovate.com');
