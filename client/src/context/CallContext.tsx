@@ -40,6 +40,9 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
   const [callWasDeclined, setCallWasDeclined] = useState(false);
 
   useEffect(() => {
+
+    if(!user) return;
+
     const connectAndRegister = () => {
       if (!userRef.current) return;
       socket.emit('user-online', userRef.current._id);
@@ -72,7 +75,7 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
       socket.off('incoming-call');
       socket.off('call-declined');
     };
-  }, []);
+  }, [user]);
 
   const initiateCall = useCallback(
     (toUserId: string, toUserInfo: CallerInfo) => {
