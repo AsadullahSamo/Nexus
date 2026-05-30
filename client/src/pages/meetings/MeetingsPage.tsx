@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Calendar, Clock, Plus, Check, X, Ban, Trash2, ChevronDown, Video } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
@@ -352,10 +352,17 @@ const DismissedMeetings = ({ meetings, userId, onUpdateStatus }: {
 export const MeetingsPage = () => {
   const { user } = useAuth();
   const { data: meetings = [], isLoading } = useMeetings();
-  const { mutate: updateStatus } = useUpdateMeetingStatus();
+  const { mutate: updateStatus, isError, error: updateError, reset } = useUpdateMeetingStatus();
   const [showForm, setShowForm] = useState(false);
   const [view, setView] = useState<'list' | 'calendar'>('list');
   const [calendarView, setCalendarView] = useState<View>('month');
+
+  useEffect(() => {
+    if (isError) {
+      const t = setTimeout(() => reset(), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [isError, reset]);
 
   if (!user) return null;
 
@@ -393,6 +400,7 @@ export const MeetingsPage = () => {
           <h1 className="text-2xl font-bold text-gray-900">Meetings</h1>
           <p className="text-gray-600">Schedule and manage your meetings</p>
         </div>
+
         <div className="flex items-center gap-3">
           <div className="flex rounded-md border border-gray-200 overflow-hidden">
             <button
@@ -423,6 +431,12 @@ export const MeetingsPage = () => {
       </div>
 
       {showForm && <ScheduleMeetingForm onClose={() => setShowForm(false)} />}
+
+        {isError && (
+          <div className="mb-4 p-3 rounded-md bg-red-50 border border-red-200 text-red-600 text-sm">
+              {(updateError as any)?.response?.data?.message || 'Something went wrong'}
+          </div>
+        )}
 
       {isLoading ? (
         <div className="flex justify-center py-12">
