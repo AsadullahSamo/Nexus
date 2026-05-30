@@ -2,7 +2,6 @@ const paths = require('./swaggerDocs');
 
 
 const options = {
-  definition: {
     openapi: '3.0.0',
     info: {
       title: 'Nexus API',
@@ -87,7 +86,6 @@ const options = {
     },
     security: [{ bearerAuth: [] }],
     paths
-  },
 };
 
 module.exports = options;
