@@ -10,6 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useEntrepreneurProfile, useUpdateEntrepreneurProfile, useInvestorProfile, useUpdateInvestorProfile } from '../../hooks/useExtendedProfile';
 
 import api from '../../lib/api';
+import { useNavigate } from 'react-router-dom';
 
 export const SettingsPage: React.FC = () => {
   
@@ -31,6 +32,7 @@ export const SettingsPage: React.FC = () => {
   const [passwordState, setPasswordState] = useState({ error: '', success: '' });
   const [isPasswordPending, setIsPasswordPending] = useState(false);
   const [otp, setOtp] = useState({enabled: false, modalOpen: false, input: '', error: '', loading: false, serverOtp: ''});
+  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'billing'>('profile');
 
   const [entrepreneurFields, setEntrepreneurFields] = useState({
     startupName: '', industry: '', pitchSummary: '', fundingNeeded: '', location: '', 
@@ -42,6 +44,8 @@ export const SettingsPage: React.FC = () => {
     minimumInvestment: '', maximumInvestment: '', totalInvestments: ''
   })
 
+  const navigate = useNavigate()
+  
   useEffect(() => {
     if (profile) {
       setName(profile.name ?? '');
@@ -127,6 +131,8 @@ export const SettingsPage: React.FC = () => {
   };
   
   const [isSaving, setIsSaving] = useState(false);
+
+  
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -245,35 +251,24 @@ export const SettingsPage: React.FC = () => {
         <Card className="lg:col-span-1">
           <CardBody className="p-2">
             <nav className="space-y-1">
-              <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-primary-700 bg-primary-50 rounded-md">
-                <User size={18} className="mr-3" />
-                Profile
-              </button>
-              
-              <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md">
-                <Lock size={18} className="mr-3" />
-                Security
-              </button>
-              
-              <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md">
-                <Bell size={18} className="mr-3" />
-                Notifications
-              </button>
-              
-              <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md">
-                <Globe size={18} className="mr-3" />
-                Language
-              </button>
-              
-              <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md">
-                <Palette size={18} className="mr-3" />
-                Appearance
-              </button>
-              
-              <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md">
-                <CreditCard size={18} className="mr-3" />
-                Billing
-              </button>
+             {[
+                { icon: <User size={18} />, label: 'Profile', tab: 'profile' as const },
+                { icon: <Lock size={18} />, label: 'Security', tab: 'security' as const },
+                { icon: <CreditCard size={18} />, label: 'Billing', tab: 'billing' as const },
+              ].map(({ icon, label, tab }) => (
+                <button
+                  key={label}
+                  onClick={() => tab === 'billing' ? navigate('/payments') : setActiveTab(tab)}
+                  className={`flex items-center w-full px-3 py-2 text-sm font-medium rounded-md ${
+                    activeTab === tab
+                      ? 'text-primary-700 bg-primary-50'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <span className="mr-3">{icon}</span>
+                  {label}
+                </button>
+              ))}
             </nav>
           </CardBody>
         </Card>
@@ -281,223 +276,228 @@ export const SettingsPage: React.FC = () => {
         {/* Main settings content */}
         <div className="lg:col-span-3 space-y-6">
           {/* Profile Settings */}
-          <Card>
-            <CardHeader>
-              <h2 className="text-lg font-medium text-gray-900">Profile Settings</h2>
-            </CardHeader>
-            <CardBody className="space-y-6">
-              <div className="flex items-center gap-6">
-                <Avatar
-                  src={profile?.avatar ?? null}
-                  alt={profile?.name ?? null}
-                  size="xl"
-                />
-                
-                <div>
-                  <Button variant="outline" size="sm">
-                    Change Photo
-                  </Button>
-                  <p className="mt-2 text-sm text-gray-500">
-                    JPG, GIF or PNG. Max size of 800K
-                  </p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Input
-                  label="Name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-                
-                <Input
-                  label="Email"
-                  type="email"
-                  defaultValue={user.email}
-                />
-                
-                <Input
-                  label="Role"
-                  value={user.role}
-                  disabled
-                />
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Bio
-                  </label>
-                  <textarea
-                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                    rows={4}
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
+          {activeTab === 'profile' && (
+            <Card>
+              <CardHeader>
+                <h2 className="text-lg font-medium text-gray-900">Profile Settings</h2>
+              </CardHeader>
+              <CardBody className="space-y-6">
+                <div className="flex items-center gap-6">
+                  <Avatar
+                    src={profile?.avatar ?? null}
+                    alt={profile?.name ?? null}
+                    size="xl"
                   />
+                  
+                  <div>
+                    <Button variant="outline" size="sm">
+                      Change Photo
+                    </Button>
+                    <p className="mt-2 text-sm text-gray-500">
+                      JPG, GIF or PNG. Max size of 800K
+                    </p>
+                  </div>
                 </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Input
+                    label="Name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                  
+                  <Input
+                    label="Email"
+                    type="email"
+                    defaultValue={user.email}
+                  />
+                  
+                  <Input
+                    label="Role"
+                    value={user.role}
+                    disabled
+                  />
 
-              </div>
-              
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Bio
+                    </label>
+                    <textarea
+                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                      rows={4}
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                    />
+                  </div>
 
-              {user.role === 'entrepreneur' && (
-                <Card>
-                  <CardHeader>
-                    <h2 className="text-lg font-medium text-gray-900">Startup Info</h2>
-                  </CardHeader>
-                  <CardBody className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Input label="Startup Name" value={entrepreneurFields.startupName} onChange={(e) =>updateEntrepreneurField('startupName', e.target.value) } />
-                      <Input label="Industry" value={entrepreneurFields.industry} onChange={(e) => updateEntrepreneurField('industry', e.target.value) } />
-                      <Input label="Funding Needed" value={entrepreneurFields.fundingNeeded} onChange={(e) => updateEntrepreneurField('fundingNeeded', e.target.value) } />
-                      <Input label="Location" value={entrepreneurFields.location} onChange={(e) => updateEntrepreneurField('location', e.target.value) } />
-                      <Input label="Founded Year" type="number" value={entrepreneurFields.foundedYear} onChange={(e) => updateEntrepreneurField('foundedYear', e.target.value) } />
-                      <Input label="Team Size" type="number" value={entrepreneurFields.teamSize} onChange={(e) => updateEntrepreneurField('teamSize', e.target.value) } />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Pitch Summary</label>
-                      <textarea
-                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                        rows={4}
-                        value={entrepreneurFields.pitchSummary}
-                        onChange={(e) => updateEntrepreneurField('pitchSummary', e.target.value)}
+                </div>
+                
+
+                {user.role === 'entrepreneur' && (
+                  <Card>
+                    <CardHeader>
+                      <h2 className="text-lg font-medium text-gray-900">Startup Info</h2>
+                    </CardHeader>
+                    <CardBody className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input label="Startup Name" value={entrepreneurFields.startupName} onChange={(e) =>updateEntrepreneurField('startupName', e.target.value) } />
+                        <Input label="Industry" value={entrepreneurFields.industry} onChange={(e) => updateEntrepreneurField('industry', e.target.value) } />
+                        <Input label="Funding Needed" value={entrepreneurFields.fundingNeeded} onChange={(e) => updateEntrepreneurField('fundingNeeded', e.target.value) } />
+                        <Input label="Location" value={entrepreneurFields.location} onChange={(e) => updateEntrepreneurField('location', e.target.value) } />
+                        <Input label="Founded Year" type="number" value={entrepreneurFields.foundedYear} onChange={(e) => updateEntrepreneurField('foundedYear', e.target.value) } />
+                        <Input label="Team Size" type="number" value={entrepreneurFields.teamSize} onChange={(e) => updateEntrepreneurField('teamSize', e.target.value) } />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Pitch Summary</label>
+                        <textarea
+                          className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                          rows={4}
+                          value={entrepreneurFields.pitchSummary}
+                          onChange={(e) => updateEntrepreneurField('pitchSummary', e.target.value)}
+                        />
+                      </div>
+                    </CardBody>
+                  </Card>
+                )}
+
+                {user.role === 'investor' && (
+                  <Card>
+                    <CardHeader>
+                      <h2 className="text-lg font-medium text-gray-900">Investor Info</h2>
+                    </CardHeader>
+                    <CardBody className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input label="Min Investment" value={investorFields.minimumInvestment} onChange={(e) => updateInvestorField('minimumInvestment', e.target.value) } />
+                        <Input label="Max Investment" value={investorFields.maximumInvestment} onChange={(e) => updateInvestorField('maximumInvestment', e.target.value) } />
+                        <Input label="Total Investments" type="number" value={investorFields.totalInvestments} onChange={(e) => updateInvestorField('totalInvestments', e.target.value) } />
+                      </div>
+                      <Input
+                        label="Investment Interests (comma separated)"
+                        value={investorFields.investmentInterests}
+                        onChange={(e) => updateInvestorField('investmentInterests', e.target.value) }
                       />
-                    </div>
-                  </CardBody>
-                </Card>
-              )}
+                      <Input
+                        label="Investment Stages (comma separated)"
+                        value={investorFields.investmentStage}
+                        onChange={(e) => updateInvestorField('investmentStage', e.target.value) }
+                      />
+                      <Input
+                        label="Portfolio Companies (comma separated)"
+                        value={investorFields.portfolioCompanies}
+                        onChange={(e) => updateInvestorField('portfolioCompanies', e.target.value) }
+                      />
+                    </CardBody>
+                  </Card>
+                )}
+                
+                <div className="flex justify-end gap-3">
+                  <Button variant="outline">Cancel</Button>
+                  <Button
+                    isLoading={isSaving}
+                    onClick={handleSave}
+                  >
+                    Save Changes
+                  </Button>
+                </div>
+              </CardBody>
+            </Card>
+          )}
 
-              {user.role === 'investor' && (
-                <Card>
-                  <CardHeader>
-                    <h2 className="text-lg font-medium text-gray-900">Investor Info</h2>
-                  </CardHeader>
-                  <CardBody className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Input label="Min Investment" value={investorFields.minimumInvestment} onChange={(e) => updateInvestorField('minimumInvestment', e.target.value) } />
-                      <Input label="Max Investment" value={investorFields.maximumInvestment} onChange={(e) => updateInvestorField('maximumInvestment', e.target.value) } />
-                      <Input label="Total Investments" type="number" value={investorFields.totalInvestments} onChange={(e) => updateInvestorField('totalInvestments', e.target.value) } />
-                    </div>
-                    <Input
-                      label="Investment Interests (comma separated)"
-                      value={investorFields.investmentInterests}
-                      onChange={(e) => updateInvestorField('investmentInterests', e.target.value) }
-                    />
-                    <Input
-                      label="Investment Stages (comma separated)"
-                      value={investorFields.investmentStage}
-                      onChange={(e) => updateInvestorField('investmentStage', e.target.value) }
-                    />
-                    <Input
-                      label="Portfolio Companies (comma separated)"
-                      value={investorFields.portfolioCompanies}
-                      onChange={(e) => updateInvestorField('portfolioCompanies', e.target.value) }
-                    />
-                  </CardBody>
-                </Card>
-              )}
-              
-              <div className="flex justify-end gap-3">
-                <Button variant="outline">Cancel</Button>
-                <Button
-                  isLoading={isSaving}
-                  onClick={handleSave}
-                >
-                  Save Changes
-                </Button>
-              </div>
-            </CardBody>
-          </Card>
           
           {/* Security Settings */}
-          <Card>
-            <CardHeader>
-              <h2 className="text-lg font-medium text-gray-900">Security Settings</h2>
-            </CardHeader>
-            <CardBody className="space-y-6">
-              
-              <div>
-                <h3 className="text-sm font-medium text-gray-900 mb-4">Two-Factor Authentication</h3>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">Add an extra layer of security to your account</p>
-                    <Badge variant={otp.enabled ? 'success' : 'error'} className="mt-1">
-                      {otp.enabled ? 'Enabled' : 'Not Enabled'}
-                    </Badge>
+          {activeTab === 'security' && (
+            <Card>
+              <CardHeader>
+                <h2 className="text-lg font-medium text-gray-900">Security Settings</h2>
+              </CardHeader>
+              <CardBody className="space-y-6">
+                
+                <div>
+                  <h3 className="text-sm font-medium text-gray-900 mb-4">Two-Factor Authentication</h3>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">Add an extra layer of security to your account</p>
+                      <Badge variant={otp.enabled ? 'success' : 'error'} className="mt-1">
+                        {otp.enabled ? 'Enabled' : 'Not Enabled'}
+                      </Badge>
+                    </div>
+                    {!otp.enabled && (
+                      <Button variant="outline" onClick={handleGenerateOtp} isLoading={otp.loading}>
+                        Enable
+                      </Button>
+                    )}
                   </div>
-                  {!otp.enabled && (
-                    <Button variant="outline" onClick={handleGenerateOtp} isLoading={otp.loading}>
-                      Enable
-                    </Button>
-                  )}
+                  {otp.error && <p className="text-sm text-red-600 mt-2">{otp.error}</p>}
                 </div>
-                {otp.error && <p className="text-sm text-red-600 mt-2">{otp.error}</p>}
-              </div>
 
-              {otp.modalOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                  <div className="bg-white rounded-lg p-6 w-full max-w-sm space-y-4">
-                    <h3 className="text-lg font-medium text-gray-900">Verify OTP</h3>
-                    <p className="text-sm text-gray-600">
-                      Your OTP
-                    </p>
-                    <p className="text-2xl font-bold tracking-widest text-center text-primary-600">
-                      {otp.serverOtp}
-                    </p>
-                    <Input
-                      label="Enter OTP"
-                      value={otp.input}
-                      onChange={(e) => setOtp(prev => ({ ...prev, input: e.target.value }))}
-                    />
-                    {otp.error && <p className="text-sm text-red-600">{otp.error}</p>}
-                    <div className="flex justify-end gap-3">
-                      <Button variant="outline" onClick={() => setOtp(prev => ({ ...prev, modalOpen: false }))}>Cancel</Button>
-                      <Button onClick={handleVerifyOtp} isLoading={otp.loading}>Verify</Button>
+                {otp.modalOpen && (
+                  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 w-full max-w-sm space-y-4">
+                      <h3 className="text-lg font-medium text-gray-900">Verify OTP</h3>
+                      <p className="text-sm text-gray-600">
+                        Your OTP
+                      </p>
+                      <p className="text-2xl font-bold tracking-widest text-center text-primary-600">
+                        {otp.serverOtp}
+                      </p>
+                      <Input
+                        label="Enter OTP"
+                        value={otp.input}
+                        onChange={(e) => setOtp(prev => ({ ...prev, input: e.target.value }))}
+                      />
+                      {otp.error && <p className="text-sm text-red-600">{otp.error}</p>}
+                      <div className="flex justify-end gap-3">
+                        <Button variant="outline" onClick={() => setOtp(prev => ({ ...prev, modalOpen: false }))}>Cancel</Button>
+                        <Button onClick={handleVerifyOtp} isLoading={otp.loading}>Verify</Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-              
-              <div className="pt-6 border-t border-gray-200">
-                <h3 className="text-sm font-medium text-gray-900 mb-4">Change Password</h3>
-                <div className="space-y-4">
-                  
-                <Input
-                  label="Current Password"
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                />
+                )}
+                
+                <div className="pt-6 border-t border-gray-200">
+                  <h3 className="text-sm font-medium text-gray-900 mb-4">Change Password</h3>
+                  <div className="space-y-4">
+                    
+                  <Input
+                    label="Current Password"
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                  />
 
-                <Input
-                  label="New Password"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                />
+                  <Input
+                    label="New Password"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
 
-                <Input
-                  label="Confirm New Password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
+                  <Input
+                    label="Confirm New Password"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
 
-                {passwordState.error && <p className="text-sm text-red-600 ">{passwordState.error}</p>}
-                {passwordState.success && <p className="text-sm text-green-600">{passwordState.success}</p>}
+                  {passwordState.error && <p className="text-sm text-red-600 ">{passwordState.error}</p>}
+                  {passwordState.success && <p className="text-sm text-green-600">{passwordState.success}</p>}
 
-                  
-                  <div className="flex justify-end">
-                      <Button 
-                        onClick={handleChangePassword} 
-                        isLoading={isPasswordPending}
-                        disabled={!currentPassword || !newPassword || !confirmPassword}
-                      >
-                        Update Password
-                      </Button>
+                    
+                    <div className="flex justify-end">
+                        <Button 
+                          onClick={handleChangePassword} 
+                          isLoading={isPasswordPending}
+                          disabled={!currentPassword || !newPassword || !confirmPassword}
+                        >
+                          Update Password
+                        </Button>
+                    </div>
+
                   </div>
-
                 </div>
-              </div>
-            </CardBody>
-          </Card>
+              </CardBody>
+            </Card>
+          )}
         </div>
       </div>
     </div>
