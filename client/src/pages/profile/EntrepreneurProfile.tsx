@@ -7,12 +7,14 @@ import { Card, CardBody, CardHeader } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { useAuth } from '../../context/AuthContext';
 import { useProfile } from '../../hooks/useProfile';
+import { useEntrepreneurProfile } from '../../hooks/useExtendedProfile';
 
 export const EntrepreneurProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   const { data: entrepreneur, isLoading } = useProfile(id ?? '');
+  const { data: entrepreneurProfile } = useEntrepreneurProfile(id ?? '');
 
   if (isLoading) {
     return (
@@ -86,6 +88,60 @@ export const EntrepreneurProfile: React.FC = () => {
           </CardHeader>
           <CardBody>
             <p className="text-gray-700">{entrepreneur.bio}</p>
+          </CardBody>
+        </Card>
+      )}
+
+      {(entrepreneurProfile?.startupName || entrepreneurProfile?.industry || entrepreneurProfile?.pitchSummary) && (
+        <Card>
+          <CardHeader>
+            <h2 className="text-lg font-medium text-gray-900">Startup Info</h2>
+          </CardHeader>
+          <CardBody className="space-y-4">
+            {entrepreneurProfile.startupName && (
+              <div>
+                <span className="text-sm text-gray-500">Startup Name</span>
+                <p className="text-sm font-medium text-gray-900">{entrepreneurProfile.startupName}</p>
+              </div>
+            )}
+            {entrepreneurProfile.industry && (
+              <div>
+                <span className="text-sm text-gray-500">Industry</span>
+                <p className="text-sm font-medium text-gray-900">{entrepreneurProfile.industry}</p>
+              </div>
+            )}
+            {entrepreneurProfile.pitchSummary && (
+              <div>
+                <span className="text-sm text-gray-500">Pitch Summary</span>
+                <p className="text-sm text-gray-700">{entrepreneurProfile.pitchSummary}</p>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-4">
+              {entrepreneurProfile.fundingNeeded && (
+                <div>
+                  <span className="text-sm text-gray-500">Funding Needed</span>
+                  <p className="text-sm font-medium text-gray-900">{entrepreneurProfile.fundingNeeded}</p>
+                </div>
+              )}
+              {entrepreneurProfile.location && (
+                <div>
+                  <span className="text-sm text-gray-500">Location</span>
+                  <p className="text-sm font-medium text-gray-900">{entrepreneurProfile.location}</p>
+                </div>
+              )}
+              {entrepreneurProfile.foundedYear && (
+                <div>
+                  <span className="text-sm text-gray-500">Founded</span>
+                  <p className="text-sm font-medium text-gray-900">{entrepreneurProfile.foundedYear}</p>
+                </div>
+              )}
+              {entrepreneurProfile.teamSize && (
+                <div>
+                  <span className="text-sm text-gray-500">Team Size</span>
+                  <p className="text-sm font-medium text-gray-900">{entrepreneurProfile.teamSize} people</p>
+                </div>
+              )}
+            </div>
           </CardBody>
         </Card>
       )}

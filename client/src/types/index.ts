@@ -70,3 +70,26 @@ export interface Transaction {
   stripePaymentIntentId?: string;
   createdAt: string;
 }
+
+export interface EntrepreneurProfile {
+  _id: string;
+  user: string;
+  startupName: string;
+  industry: string;
+  pitchSummary: string;
+  fundingNeeded: string;
+  location: string;
+  foundedYear: number | null;
+  teamSize: number | null;
+}
+
+export interface InvestorProfile {
+  _id: string;
+  user: string;
+  investmentInterests: string[];
+  investmentStage: string[];
+  portfolioCompanies: string[];
+  minimumInvestment: string;
+  maximumInvestment: string;
+  totalInvestments: number;
+}

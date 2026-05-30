@@ -44,10 +44,6 @@ export const InvestorsPage: React.FC = () => {
           startAdornment={<Search size={18} />}
           fullWidth
         />
-        <div className="flex items-center gap-2">
-          <Filter size={18} className="text-gray-500" />
-          <span className="text-sm text-gray-600">{investors.length} results</span>
-        </div>
       </div>
 
       {isLoading ? (

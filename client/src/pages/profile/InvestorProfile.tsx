@@ -7,12 +7,14 @@ import { Card, CardBody, CardHeader } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { useAuth } from '../../context/AuthContext';
 import { useProfile } from '../../hooks/useProfile';
+import { useInvestorProfile } from '../../hooks/useExtendedProfile';
 
 export const InvestorProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   const { data: investor, isLoading } = useProfile(id ?? '');
+  const { data: investorProfile } = useInvestorProfile(id ?? '');
 
   if (isLoading) {
     return (
@@ -86,6 +88,66 @@ export const InvestorProfile: React.FC = () => {
           </CardHeader>
           <CardBody>
             <p className="text-gray-700">{investor.bio}</p>
+          </CardBody>
+        </Card>
+      )}
+
+      {investorProfile && (
+        <Card>
+          <CardHeader>
+            <h2 className="text-lg font-medium text-gray-900">Investment Info</h2>
+          </CardHeader>
+          <CardBody className="space-y-4">
+            {investorProfile.investmentInterests.length > 0 && (
+              <div>
+                <span className="text-sm text-gray-500">Investment Interests</span>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {investorProfile.investmentInterests.map((interest) => (
+                    <Badge key={interest} variant="primary" size="sm">{interest}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            {investorProfile.investmentStage.length > 0 && (
+              <div>
+                <span className="text-sm text-gray-500">Investment Stage</span>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {investorProfile.investmentStage.map((stage) => (
+                    <Badge key={stage} variant="secondary" size="sm">{stage}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-4">
+              {investorProfile.minimumInvestment && (
+                <div>
+                  <span className="text-sm text-gray-500">Min Investment</span>
+                  <p className="text-sm font-medium text-gray-900">{investorProfile.minimumInvestment}</p>
+                </div>
+              )}
+              {investorProfile.maximumInvestment && (
+                <div>
+                  <span className="text-sm text-gray-500">Max Investment</span>
+                  <p className="text-sm font-medium text-gray-900">{investorProfile.maximumInvestment}</p>
+                </div>
+              )}
+              {investorProfile.totalInvestments > 0 && (
+                <div>
+                  <span className="text-sm text-gray-500">Total Investments</span>
+                  <p className="text-sm font-medium text-gray-900">{investorProfile.totalInvestments} companies</p>
+                </div>
+              )}
+            </div>
+            {investorProfile.portfolioCompanies.length > 0 && (
+              <div>
+                <span className="text-sm text-gray-500">Portfolio Companies</span>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {investorProfile.portfolioCompanies.map((company) => (
+                    <Badge key={company} variant="gray" size="sm">{company}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
           </CardBody>
         </Card>
       )}

@@ -7,6 +7,7 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
 import { useAuth } from '../../context/AuthContext';
+import { useEntrepreneurProfile, useUpdateEntrepreneurProfile, useInvestorProfile, useUpdateInvestorProfile } from '../../hooks/useExtendedProfile';
 
 import api from '../../lib/api';
 
@@ -15,6 +16,10 @@ export const SettingsPage: React.FC = () => {
   const { user, updateUser: syncAuthUser } = useAuth();
   const { data: profile } = useProfile(user?._id ?? '');
   const { mutate: updateProfile, isPending } = useUpdateProfile(syncAuthUser);
+  const { data: startupProfile } = useEntrepreneurProfile(user?.role === 'entrepreneur' ? user._id : '');
+  const { mutate: updaateEntrepreneurProfile, isPending: isStartupPending } = useUpdateEntrepreneurProfile();
+  const { data: investorProfile } = useInvestorProfile(user?.role === 'investor' ? user._id : '');
+  const { mutate: updateInvestorProfile, isPending: isInvestorPending } = useUpdateInvestorProfile();
   
   if (!user) return null;
 
@@ -26,6 +31,20 @@ export const SettingsPage: React.FC = () => {
   const [passwordState, setPasswordState] = useState({ error: '', success: '' });
   const [isPasswordPending, setIsPasswordPending] = useState(false);
   const [otp, setOtp] = useState({enabled: false, modalOpen: false, input: '', error: '', loading: false, serverOtp: ''});
+  const [startupName, setStartupName] = useState('');
+  const [industry, setIndustry] = useState('');
+  const [pitchSummary, setPitchSummary] = useState('');
+  const [fundingNeeded, setFundingNeeded] = useState('');
+  const [location, setLocation] = useState('');
+  const [foundedYear, setFoundedYear] = useState('');
+  const [teamSize, setTeamSize] = useState('');
+
+  const [investmentInterests, setInvestmentInterests] = useState('');
+  const [investmentStage, setInvestmentStage] = useState('');
+  const [portfolioCompanies, setPortfolioCompanies] = useState('');
+  const [minimumInvestment, setMinimumInvestment] = useState('');
+  const [maximumInvestment, setMaximumInvestment] = useState('');
+  const [totalInvestments, setTotalInvestments] = useState('');
 
   useEffect(() => {
     if (profile) {
@@ -34,6 +53,29 @@ export const SettingsPage: React.FC = () => {
       setOtp(prev => ({ ...prev, enabled: profile.otpEnabled ?? false }));
     }
   }, [profile]);
+
+  useEffect(() => {
+    if (startupProfile) {
+      setStartupName(startupProfile.startupName ?? '');
+      setIndustry(startupProfile.industry ?? '');
+      setPitchSummary(startupProfile.pitchSummary ?? '');
+      setFundingNeeded(startupProfile.fundingNeeded ?? '');
+      setLocation(startupProfile.location ?? '');
+      setFoundedYear(startupProfile.foundedYear?.toString() ?? '');
+      setTeamSize(startupProfile.teamSize?.toString() ?? '');
+    }
+  }, [startupProfile]);
+
+  useEffect(() => {
+    if (investorProfile) {
+      setInvestmentInterests(investorProfile.investmentInterests.join(', '));
+      setInvestmentStage(investorProfile.investmentStage.join(', '));
+      setPortfolioCompanies(investorProfile.portfolioCompanies.join(', '));
+      setMinimumInvestment(investorProfile.minimumInvestment ?? '');
+      setMaximumInvestment(investorProfile.maximumInvestment ?? '');
+      setTotalInvestments(investorProfile.totalInvestments?.toString() ?? '');
+    }
+  }, [investorProfile]);
 
   const handleChangePassword = async () => { 
     setPasswordState({ error: '', success: '' }); 
@@ -214,6 +256,100 @@ export const SettingsPage: React.FC = () => {
                   onChange={(e) => setBio(e.target.value)}
                 />
               </div>
+
+              {user.role === 'entrepreneur' && (
+                <Card>
+                  <CardHeader>
+                    <h2 className="text-lg font-medium text-gray-900">Startup Info</h2>
+                  </CardHeader>
+                  <CardBody className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Input label="Startup Name" value={startupName} onChange={(e) => setStartupName(e.target.value)} />
+                      <Input label="Industry" value={industry} onChange={(e) => setIndustry(e.target.value)} />
+                      <Input label="Funding Needed" value={fundingNeeded} onChange={(e) => setFundingNeeded(e.target.value)} />
+                      <Input label="Location" value={location} onChange={(e) => setLocation(e.target.value)} />
+                      <Input label="Founded Year" type="number" value={foundedYear} onChange={(e) => setFoundedYear(e.target.value)} />
+                      <Input label="Team Size" type="number" value={teamSize} onChange={(e) => setTeamSize(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Pitch Summary</label>
+                      <textarea
+                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                        rows={4}
+                        value={pitchSummary}
+                        onChange={(e) => setPitchSummary(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex justify-end">
+                      <Button
+                        isLoading={isStartupPending}
+                        onClick={() => updaateEntrepreneurProfile({
+                          userId: user._id,
+                          data: {
+                            startupName,
+                            industry,
+                            pitchSummary,
+                            fundingNeeded,
+                            location,
+                            foundedYear: foundedYear ? parseInt(foundedYear) : null,
+                            teamSize: teamSize ? parseInt(teamSize) : null,
+                          },
+                        })}
+                      >
+                        Save Startup Info
+                      </Button>
+                    </div>
+                  </CardBody>
+                </Card>
+              )}
+
+              {user.role === 'investor' && (
+                <Card>
+                  <CardHeader>
+                    <h2 className="text-lg font-medium text-gray-900">Investor Info</h2>
+                  </CardHeader>
+                  <CardBody className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Input label="Min Investment" value={minimumInvestment} onChange={(e) => setMinimumInvestment(e.target.value)} />
+                      <Input label="Max Investment" value={maximumInvestment} onChange={(e) => setMaximumInvestment(e.target.value)} />
+                      <Input label="Total Investments" type="number" value={totalInvestments} onChange={(e) => setTotalInvestments(e.target.value)} />
+                    </div>
+                    <Input
+                      label="Investment Interests (comma separated)"
+                      value={investmentInterests}
+                      onChange={(e) => setInvestmentInterests(e.target.value)}
+                    />
+                    <Input
+                      label="Investment Stages (comma separated)"
+                      value={investmentStage}
+                      onChange={(e) => setInvestmentStage(e.target.value)}
+                    />
+                    <Input
+                      label="Portfolio Companies (comma separated)"
+                      value={portfolioCompanies}
+                      onChange={(e) => setPortfolioCompanies(e.target.value)}
+                    />
+                    <div className="flex justify-end">
+                      <Button
+                        isLoading={isInvestorPending}
+                        onClick={() => updateInvestorProfile({
+                          userId: user._id,
+                          data: {
+                            investmentInterests: investmentInterests.split(',').map((s) => s.trim()).filter(Boolean),
+                            investmentStage: investmentStage.split(',').map((s) => s.trim()).filter(Boolean),
+                            portfolioCompanies: portfolioCompanies.split(',').map((s) => s.trim()).filter(Boolean),
+                            minimumInvestment,
+                            maximumInvestment,
+                            totalInvestments: totalInvestments ? parseInt(totalInvestments) : 0,
+                          },
+                        })}
+                      >
+                        Save Investor Info
+                      </Button>
+                    </div>
+                  </CardBody>
+                </Card>
+              )}
               
               <div className="flex justify-end gap-3">
                 <Button variant="outline">Cancel</Button>
