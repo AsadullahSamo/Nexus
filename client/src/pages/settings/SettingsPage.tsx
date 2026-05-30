@@ -15,11 +15,11 @@ export const SettingsPage: React.FC = () => {
   
   const { user, updateUser: syncAuthUser } = useAuth();
   const { data: profile } = useProfile(user?._id ?? '');
-  const { mutate: updateProfile, isPending } = useUpdateProfile(syncAuthUser);
+  const { mutate: updateProfile } = useUpdateProfile(syncAuthUser);
   const { data: startupProfile } = useEntrepreneurProfile(user?.role === 'entrepreneur' ? user._id : '');
-  const { mutate: updaateEntrepreneurProfile, isPending: isStartupPending } = useUpdateEntrepreneurProfile();
+  const { mutate: updateEntrepreneurProfile  } = useUpdateEntrepreneurProfile();
   const { data: investorProfile } = useInvestorProfile(user?.role === 'investor' ? user._id : '');
-  const { mutate: updateInvestorProfile, isPending: isInvestorPending } = useUpdateInvestorProfile();
+  const { mutate: updateInvestorProfile } = useUpdateInvestorProfile();
   
   if (!user) return null;
 
@@ -31,20 +31,16 @@ export const SettingsPage: React.FC = () => {
   const [passwordState, setPasswordState] = useState({ error: '', success: '' });
   const [isPasswordPending, setIsPasswordPending] = useState(false);
   const [otp, setOtp] = useState({enabled: false, modalOpen: false, input: '', error: '', loading: false, serverOtp: ''});
-  const [startupName, setStartupName] = useState('');
-  const [industry, setIndustry] = useState('');
-  const [pitchSummary, setPitchSummary] = useState('');
-  const [fundingNeeded, setFundingNeeded] = useState('');
-  const [location, setLocation] = useState('');
-  const [foundedYear, setFoundedYear] = useState('');
-  const [teamSize, setTeamSize] = useState('');
 
-  const [investmentInterests, setInvestmentInterests] = useState('');
-  const [investmentStage, setInvestmentStage] = useState('');
-  const [portfolioCompanies, setPortfolioCompanies] = useState('');
-  const [minimumInvestment, setMinimumInvestment] = useState('');
-  const [maximumInvestment, setMaximumInvestment] = useState('');
-  const [totalInvestments, setTotalInvestments] = useState('');
+  const [entrepreneurFields, setEntrepreneurFields] = useState({
+    startupName: '', industry: '', pitchSummary: '', fundingNeeded: '', location: '', 
+    foundedYear: '', teamSize: ''
+  });
+
+  const [investorFields, setInvestorFields] = useState({
+    investmentInterests: '', investmentStage: '', portfolioCompanies: '',
+    minimumInvestment: '', maximumInvestment: '', totalInvestments: ''
+  })
 
   useEffect(() => {
     if (profile) {
@@ -56,26 +52,50 @@ export const SettingsPage: React.FC = () => {
 
   useEffect(() => {
     if (startupProfile) {
-      setStartupName(startupProfile.startupName ?? '');
-      setIndustry(startupProfile.industry ?? '');
-      setPitchSummary(startupProfile.pitchSummary ?? '');
-      setFundingNeeded(startupProfile.fundingNeeded ?? '');
-      setLocation(startupProfile.location ?? '');
-      setFoundedYear(startupProfile.foundedYear?.toString() ?? '');
-      setTeamSize(startupProfile.teamSize?.toString() ?? '');
+      setEntrepreneurFields(({
+        startupName: startupProfile.startupName ?? '',
+        industry: startupProfile.industry ?? '',
+        pitchSummary: startupProfile.pitchSummary ?? '',
+        fundingNeeded: startupProfile.fundingNeeded ?? '',
+        location: startupProfile.location ?? '',
+        foundedYear: startupProfile.foundedYear?.toString() ?? '',
+        teamSize: startupProfile.teamSize?.toString() ?? ''
+      }));
     }
   }, [startupProfile]);
 
   useEffect(() => {
     if (investorProfile) {
-      setInvestmentInterests(investorProfile.investmentInterests.join(', '));
-      setInvestmentStage(investorProfile.investmentStage.join(', '));
-      setPortfolioCompanies(investorProfile.portfolioCompanies.join(', '));
-      setMinimumInvestment(investorProfile.minimumInvestment ?? '');
-      setMaximumInvestment(investorProfile.maximumInvestment ?? '');
-      setTotalInvestments(investorProfile.totalInvestments?.toString() ?? '');
+      setInvestorFields( ({
+        investmentInterests: investorProfile.investmentInterests.join(', '),
+        investmentStage: investorProfile.investmentStage.join(', '),
+        portfolioCompanies: investorProfile.portfolioCompanies.join(', '),
+        minimumInvestment: investorProfile.minimumInvestment ?? '',
+        maximumInvestment: investorProfile.maximumInvestment ?? '',
+        totalInvestments: investorProfile.totalInvestments?.toString() ?? ''
+      }));
     }
   }, [investorProfile]);
+
+  const updateEntrepreneurField = (
+    field: keyof typeof entrepreneurFields,
+    value: string
+  ) => {
+    setEntrepreneurFields(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const updateInvestorField = (
+    field: keyof typeof investorFields,
+    value: string
+  ) => {
+    setInvestorFields(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
 
   const handleChangePassword = async () => { 
     setPasswordState({ error: '', success: '' }); 
@@ -103,6 +123,69 @@ export const SettingsPage: React.FC = () => {
       setPasswordState({ error: err.response?.data?.message ?? 'Failed to update password', success: '' }); 
     } finally { 
       setIsPasswordPending(false); 
+    }
+  };
+  
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const saves: Promise<any>[] = [
+        new Promise((resolve, reject) =>
+          updateProfile(
+            { id: user!._id, data: { name, bio } },
+            { onSuccess: resolve, onError: reject }
+          )
+        ),
+      ];
+
+      if (user!.role === 'entrepreneur') {
+        saves.push(
+          new Promise((resolve, reject) =>
+            updateEntrepreneurProfile (
+              {
+                userId: user!._id,
+                data: {
+                  startupName: entrepreneurFields.startupName,
+                  industry: entrepreneurFields.industry,
+                  pitchSummary: entrepreneurFields.pitchSummary,
+                  fundingNeeded: entrepreneurFields.fundingNeeded,
+                  location: entrepreneurFields.location,
+                  foundedYear: entrepreneurFields.foundedYear ? parseInt(entrepreneurFields.foundedYear) : null,
+                  teamSize: entrepreneurFields.teamSize ? parseInt(entrepreneurFields.teamSize) : null,
+                },
+              },
+              { onSuccess: resolve, onError: reject }
+            )
+          )
+        );
+      }
+
+      if (user!.role === 'investor') {
+        saves.push(
+          new Promise((resolve, reject) =>
+            updateInvestorProfile(
+              {
+                userId: user!._id,
+                data: {
+                  investmentInterests: investorFields.investmentInterests.split(',').map((s) => s.trim()).filter(Boolean),
+                  investmentStage: investorFields.investmentStage.split(',').map((s) => s.trim()).filter(Boolean),
+                  portfolioCompanies: investorFields.portfolioCompanies.split(',').map((s) => s.trim()).filter(Boolean),
+                  minimumInvestment: investorFields.minimumInvestment,
+                  maximumInvestment: investorFields.maximumInvestment,
+                  totalInvestments: investorFields.totalInvestments ? parseInt(investorFields.totalInvestments) : 0,
+                },
+              },
+              { onSuccess: resolve, onError: reject }
+            )
+          )
+        );
+      }
+
+      await Promise.all(saves);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -238,24 +321,21 @@ export const SettingsPage: React.FC = () => {
                   value={user.role}
                   disabled
                 />
-                
-                <Input
-                  label="Location"
-                  defaultValue="San Francisco, CA"
-                />
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Bio
+                  </label>
+                  <textarea
+                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                    rows={4}
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                  />
+                </div>
+
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Bio
-                </label>
-                <textarea
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                  rows={4}
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                />
-              </div>
 
               {user.role === 'entrepreneur' && (
                 <Card>
@@ -264,40 +344,21 @@ export const SettingsPage: React.FC = () => {
                   </CardHeader>
                   <CardBody className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Input label="Startup Name" value={startupName} onChange={(e) => setStartupName(e.target.value)} />
-                      <Input label="Industry" value={industry} onChange={(e) => setIndustry(e.target.value)} />
-                      <Input label="Funding Needed" value={fundingNeeded} onChange={(e) => setFundingNeeded(e.target.value)} />
-                      <Input label="Location" value={location} onChange={(e) => setLocation(e.target.value)} />
-                      <Input label="Founded Year" type="number" value={foundedYear} onChange={(e) => setFoundedYear(e.target.value)} />
-                      <Input label="Team Size" type="number" value={teamSize} onChange={(e) => setTeamSize(e.target.value)} />
+                      <Input label="Startup Name" value={entrepreneurFields.startupName} onChange={(e) =>updateEntrepreneurField('startupName', e.target.value) } />
+                      <Input label="Industry" value={entrepreneurFields.industry} onChange={(e) => updateEntrepreneurField('industry', e.target.value) } />
+                      <Input label="Funding Needed" value={entrepreneurFields.fundingNeeded} onChange={(e) => updateEntrepreneurField('fundingNeeded', e.target.value) } />
+                      <Input label="Location" value={entrepreneurFields.location} onChange={(e) => updateEntrepreneurField('location', e.target.value) } />
+                      <Input label="Founded Year" type="number" value={entrepreneurFields.foundedYear} onChange={(e) => updateEntrepreneurField('foundedYear', e.target.value) } />
+                      <Input label="Team Size" type="number" value={entrepreneurFields.teamSize} onChange={(e) => updateEntrepreneurField('teamSize', e.target.value) } />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Pitch Summary</label>
                       <textarea
                         className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                         rows={4}
-                        value={pitchSummary}
-                        onChange={(e) => setPitchSummary(e.target.value)}
+                        value={entrepreneurFields.pitchSummary}
+                        onChange={(e) => updateEntrepreneurField('pitchSummary', e.target.value)}
                       />
-                    </div>
-                    <div className="flex justify-end">
-                      <Button
-                        isLoading={isStartupPending}
-                        onClick={() => updaateEntrepreneurProfile({
-                          userId: user._id,
-                          data: {
-                            startupName,
-                            industry,
-                            pitchSummary,
-                            fundingNeeded,
-                            location,
-                            foundedYear: foundedYear ? parseInt(foundedYear) : null,
-                            teamSize: teamSize ? parseInt(teamSize) : null,
-                          },
-                        })}
-                      >
-                        Save Startup Info
-                      </Button>
                     </div>
                   </CardBody>
                 </Card>
@@ -310,43 +371,25 @@ export const SettingsPage: React.FC = () => {
                   </CardHeader>
                   <CardBody className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Input label="Min Investment" value={minimumInvestment} onChange={(e) => setMinimumInvestment(e.target.value)} />
-                      <Input label="Max Investment" value={maximumInvestment} onChange={(e) => setMaximumInvestment(e.target.value)} />
-                      <Input label="Total Investments" type="number" value={totalInvestments} onChange={(e) => setTotalInvestments(e.target.value)} />
+                      <Input label="Min Investment" value={investorFields.minimumInvestment} onChange={(e) => updateInvestorField('minimumInvestment', e.target.value) } />
+                      <Input label="Max Investment" value={investorFields.maximumInvestment} onChange={(e) => updateInvestorField('maximumInvestment', e.target.value) } />
+                      <Input label="Total Investments" type="number" value={investorFields.totalInvestments} onChange={(e) => updateInvestorField('totalInvestments', e.target.value) } />
                     </div>
                     <Input
                       label="Investment Interests (comma separated)"
-                      value={investmentInterests}
-                      onChange={(e) => setInvestmentInterests(e.target.value)}
+                      value={investorFields.investmentInterests}
+                      onChange={(e) => updateInvestorField('investmentInterests', e.target.value) }
                     />
                     <Input
                       label="Investment Stages (comma separated)"
-                      value={investmentStage}
-                      onChange={(e) => setInvestmentStage(e.target.value)}
+                      value={investorFields.investmentStage}
+                      onChange={(e) => updateInvestorField('investmentStage', e.target.value) }
                     />
                     <Input
                       label="Portfolio Companies (comma separated)"
-                      value={portfolioCompanies}
-                      onChange={(e) => setPortfolioCompanies(e.target.value)}
+                      value={investorFields.portfolioCompanies}
+                      onChange={(e) => updateInvestorField('portfolioCompanies', e.target.value) }
                     />
-                    <div className="flex justify-end">
-                      <Button
-                        isLoading={isInvestorPending}
-                        onClick={() => updateInvestorProfile({
-                          userId: user._id,
-                          data: {
-                            investmentInterests: investmentInterests.split(',').map((s) => s.trim()).filter(Boolean),
-                            investmentStage: investmentStage.split(',').map((s) => s.trim()).filter(Boolean),
-                            portfolioCompanies: portfolioCompanies.split(',').map((s) => s.trim()).filter(Boolean),
-                            minimumInvestment,
-                            maximumInvestment,
-                            totalInvestments: totalInvestments ? parseInt(totalInvestments) : 0,
-                          },
-                        })}
-                      >
-                        Save Investor Info
-                      </Button>
-                    </div>
                   </CardBody>
                 </Card>
               )}
@@ -354,8 +397,8 @@ export const SettingsPage: React.FC = () => {
               <div className="flex justify-end gap-3">
                 <Button variant="outline">Cancel</Button>
                 <Button
-                  isLoading={isPending}
-                  onClick={() => updateProfile({ id: user!._id, data: { name, bio } })}
+                  isLoading={isSaving}
+                  onClick={handleSave}
                 >
                   Save Changes
                 </Button>
