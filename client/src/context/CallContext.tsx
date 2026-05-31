@@ -35,6 +35,7 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
   const userRef = useRef(user);
   userRef.current = user;
+  const ringtoneRef = useRef<HTMLAudioElement | null>(null);
 
   const [incomingCall, setIncomingCall] = useState<IncomingCall | null>(null);
   const [callWasDeclined, setCallWasDeclined] = useState(false);
@@ -56,6 +57,7 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
 
     socket.on('incoming-call', ({ fromUser, roomId }) => {
       setIncomingCall({ fromUser, roomId });
+      ringtoneRef.current?.play().catch(() => {});
     });
 
     socket.on('call-declined', () => {
@@ -77,6 +79,14 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [user]);
 
+  useEffect(() => {
+    ringtoneRef.current = new Audio('/ringtone.mp3');
+    ringtoneRef.current.loop = true;
+    return () => {
+      ringtoneRef.current?.pause();
+    };
+  }, []);
+
   const initiateCall = useCallback(
     (toUserId: string, toUserInfo: CallerInfo) => {
       if (!user) return;
@@ -93,6 +103,8 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
 
   const acceptCall = () => {
     if (!incomingCall) return;
+    ringtoneRef.current?.pause();
+    ringtoneRef.current!.currentTime = 0;
     const roomId = incomingCall.roomId;
     setIncomingCall(null);
     navigate(`/video-call/${roomId}`);
@@ -100,6 +112,8 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
 
   const declineCall = () => {
     if (!incomingCall) return;
+    ringtoneRef.current?.pause();
+    ringtoneRef.current!.currentTime = 0;
     socket.emit('call-declined', { toUserId: incomingCall.fromUser._id });
     setIncomingCall(null);
   };
