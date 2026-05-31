@@ -1,3 +1,5 @@
+const path = require("path")
+const fs = require("fs")
 const User = require('../models/User');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
@@ -53,16 +55,21 @@ const uploadAvatar = asyncHandler(async (req, res, next) => {
     return next(new AppError('You can only update your own avatar', 403));
   }
 
-  const user = await User.findByIdAndUpdate(
-    req.params.id,
-    {avatar: req.file.filename},
-    {new: true}
-  )
+  const user = await User.findById(req.params.id);
+  if (!user) return next(new AppError("User not found", 404));
 
-  if(!user) return next(new AppError("User not found", 404));
+  const oldAvatar = user.avatar;
+
+  user.avatar = req.file.filename;
+  await user.save();
+
+  if (oldAvatar) {
+    const oldPath = path.join(__dirname, "../uploads", oldAvatar);
+
+    if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+  }
 
   res.status(200).json({ success: true, user })
-
 })
 
 module.exports = { getUserById, updateProfile, searchUsers, uploadAvatar };
