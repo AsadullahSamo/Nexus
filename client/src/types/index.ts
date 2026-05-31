@@ -13,12 +13,15 @@ export interface User {
   updatedAt?: string;
 }
 export interface Message {
-  id: string;
+  _id: string;
   senderId: string;
   receiverId: string;
   content: string;
   timestamp: string;
   isRead: boolean;
+  isDeleted: boolean
+  isEdited: boolean;
+  createdAt: string
 }
 
 export interface ChatConversation {

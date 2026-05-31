@@ -104,8 +104,9 @@ export const ChatPage = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="rounded-full p-2"
+                  className="border rounded-full p-2 hover:bg-primary-500 hover:text-white transition-colors"
                   aria-label="Video call"
+                  title="Start video call"
                   onClick={() =>
                     initiateCall(chatPartner._id, {
                       _id: chatPartner._id,
@@ -120,8 +121,9 @@ export const ChatPage = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="rounded-full p-2"
+                  className="rounded-full p-2 hover:bg-primary-500 hover:text-white transition-colors"
                   aria-label="Info"
+                  title="View info"
                 >
                   <Info size={18} />
                 </Button>

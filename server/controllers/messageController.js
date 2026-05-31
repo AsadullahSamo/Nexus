@@ -10,6 +10,7 @@ const getConversations = asyncHandler(async (req, res) => {
   const conversations = await Message.aggregate([
     {
       $match: {
+        isDeleted: false,
         $or: [{ sender: userId }, { receiver: userId }],
       },
     },
@@ -92,4 +93,38 @@ const sendMessage = asyncHandler(async (req, res, next) => {
   res.status(201).json({ success: true, message });
 });
 
-module.exports = { getConversations, getMessages, sendMessage };
+const deleteMessage = asyncHandler(async (req, res, next) => {
+  const message = await Message.findById(req.params.messageId);
+  if (!message) return next(new AppError('Message not found', 404));
+  if (message.sender.toString() !== req.user._id.toString()) {
+    return next(new AppError('You can only delete your own message', 403));
+  }
+  message.isDeleted = true;
+  message.content = 'This message was deleted';
+  
+  await message.save();
+  res.status(200).json({ success: true, message });
+});
+
+const editMessage = asyncHandler(async (req, res, next) => {
+  const message  = await Message.findById(req.params.messageId);
+  if (!message) return next(new AppError('Message not found', 404));
+  if (message.sender.toString() !== req.user._id.toString()) {
+    return next(new AppError('You can only delete your own message', 403));
+  }
+
+  const { content } = req.body;
+  if (!content?.trim()) {
+    return next(new AppError('Message content is required', 400));
+  }
+
+  message.isEdited = true;
+  message.content = content.trim();
+
+  await message.save();
+  res.status(200).json({ success: true, message });
+
+})
+
+
+module.exports = { getConversations, getMessages, sendMessage, deleteMessage, editMessage };

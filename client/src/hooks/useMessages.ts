@@ -49,3 +49,26 @@ export const useSendMessage = () => {
     },
   });
 };
+
+export const useDeleteMessage = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (messageId: string) => api.delete(`/messages/${messageId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    },
+  });
+}
+
+export const useEditMessage = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ messageId, content }: { messageId: string; content: string }) =>
+      api.patch(`/messages/${messageId}`, { content }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    },
+  });
+}
