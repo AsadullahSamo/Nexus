@@ -124,6 +124,9 @@ export const VideoCallPage = () => {
     return () => {
       socketCleanup?.();
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
+      if (peerConnectionRef.current === null) {
+        socket.emit('cancel-call', { toUserId: roomId?.split('-').find(id => id !== user?._id) });
+      }
       socket.emit('leave-room', roomId);
       peerConnectionRef.current?.close();
     };

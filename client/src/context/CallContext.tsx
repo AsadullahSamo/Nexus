@@ -39,6 +39,7 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
 
   const [incomingCall, setIncomingCall] = useState<IncomingCall | null>(null);
   const [callWasDeclined, setCallWasDeclined] = useState(false);
+  const [outgoingCallUserId, setOutgoingCallUserId] = useState<string | null>(null);
 
   useEffect(() => {
 
@@ -52,6 +53,7 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
     socket.off('connect');
     socket.off('incoming-call');
     socket.off('call-declined');
+    socket.off('call-cancelled');
 
     socket.on('connect', connectAndRegister);
 
@@ -64,6 +66,12 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
       setCallWasDeclined(true);
       window.dispatchEvent(new Event('call:declined'));
       setTimeout(() => setCallWasDeclined(false), 3000);
+    });
+
+    socket.on('call-cancelled', () => {
+      ringtoneRef.current?.pause();
+      ringtoneRef.current!.currentTime = 0;
+      setIncomingCall(null);
     });
 
     if (!socket.connected) {
@@ -96,6 +104,7 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
         fromUser: { _id: user._id, name: user.name, avatar: user.avatar },
         roomId,
       });
+      setOutgoingCallUserId(toUserId);
       navigate(`/video-call/${roomId}`);
     },
     [user, navigate]
@@ -128,7 +137,9 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
             <div className="w-20 h-20 rounded-full bg-primary-100 flex items-center justify-center overflow-hidden">
               {incomingCall.fromUser.avatar ? (
                 <img
-                  src={incomingCall.fromUser.avatar}
+                  src={incomingCall.fromUser.avatar?.startsWith('http')
+                    ? incomingCall.fromUser.avatar
+                    : `${import.meta.env.VITE_SERVER_URL}/uploads/${incomingCall.fromUser.avatar}`}
                   alt={incomingCall.fromUser.name}
                   className="w-full h-full object-cover rounded-full"
                 />

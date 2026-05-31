@@ -30,6 +30,13 @@ const initSocket = (server) => {
       }
     });
 
+    socket.on('cancel-call', ({ toUserId }) => {
+      const receiverSocketId = onlineUsers.get(toUserId);
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit('call-cancelled');
+      }
+    });
+
     socket.on('join-room', (roomId) => {
       socket.join(roomId);
       socket.to(roomId).emit('user-joined', socket.id);
