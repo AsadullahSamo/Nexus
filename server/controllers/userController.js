@@ -46,4 +46,23 @@ const updateProfile = asyncHandler(async (req, res, next) => {
   res.status(200).json({ success: true, user });
 });
 
-module.exports = { getUserById, updateProfile, searchUsers };
+const uploadAvatar = asyncHandler(async (req, res, next) => {
+  if(!req.file) return next(new AppError("No file uploaded", 400));
+
+  if (req.params.id !== req.user.id.toString()) {
+    return next(new AppError('You can only update your own avatar', 403));
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.params.id,
+    {avatar: req.file.filename},
+    {new: true}
+  )
+
+  if(!user) return next(new AppError("User not found", 404));
+
+  res.status(200).json({ success: true, user })
+
+})
+
+module.exports = { getUserById, updateProfile, searchUsers, uploadAvatar };

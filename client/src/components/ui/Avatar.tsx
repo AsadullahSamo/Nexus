@@ -44,14 +44,8 @@ export const Avatar: React.FC<AvatarProps> = ({
     <div className={`relative inline-block ${className}`}>
       {src ? (
         <img
-          src={src}
-          alt={alt}
+          src={src.startsWith('http') ? src : `${import.meta.env.VITE_SERVER_URL}/uploads/${src}`}
           className={`rounded-full object-cover ${sizeClasses[size]}`}
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.style.display = 'none';
-            target.nextElementSibling?.classList.remove('hidden');
-          }}
         />
       ) : null}
       <div

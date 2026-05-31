@@ -43,8 +43,11 @@ app.use(mongoSanitize);
 
 
 
-app.use('/uploads', express.static('uploads'));
-
+app.use('/uploads', express.static('uploads', {
+  setHeaders: (res) => {
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  }
+}));
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });

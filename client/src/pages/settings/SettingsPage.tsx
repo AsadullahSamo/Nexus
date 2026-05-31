@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {useProfile, useUpdateProfile} from '../../hooks/useProfile'
 import { User, Lock, Bell, Globe, Palette, CreditCard } from 'lucide-react';
 import { Card, CardHeader, CardBody } from '../../components/ui/Card';
@@ -11,8 +11,11 @@ import { useEntrepreneurProfile, useUpdateEntrepreneurProfile, useInvestorProfil
 
 import api from '../../lib/api';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const SettingsPage: React.FC = () => {
+
+  const queryClient = useQueryClient()
   
   const { user, updateUser: syncAuthUser } = useAuth();
   const { data: profile } = useProfile(user?._id ?? '');
@@ -33,6 +36,9 @@ export const SettingsPage: React.FC = () => {
   const [isPasswordPending, setIsPasswordPending] = useState(false);
   const [otp, setOtp] = useState({enabled: false, modalOpen: false, input: '', error: '', loading: false, serverOtp: ''});
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'billing'>('profile');
+  const [isSaving, setIsSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   const [entrepreneurFields, setEntrepreneurFields] = useState({
     startupName: '', industry: '', pitchSummary: '', fundingNeeded: '', location: '', 
@@ -129,10 +135,27 @@ export const SettingsPage: React.FC = () => {
       setIsPasswordPending(false); 
     }
   };
-  
-  const [isSaving, setIsSaving] = useState(false);
 
-  
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    setIsUploadingAvatar(true);
+    try {
+      const res = await api.patch(`/users/${user!._id}/avatar`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      syncAuthUser(res.data.user);
+      await queryClient.refetchQueries({ queryKey: ['user', user!._id] });    
+    } catch (err: any) {
+      console.error('Avatar upload failed:', err);
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -283,20 +306,33 @@ export const SettingsPage: React.FC = () => {
               </CardHeader>
               <CardBody className="space-y-6">
                 <div className="flex items-center gap-6">
-                  <Avatar
-                    src={profile?.avatar ?? null}
-                    alt={profile?.name ?? null}
-                    size="xl"
-                  />
                   
-                  <div>
-                    <Button variant="outline" size="sm">
-                      Change Photo
-                    </Button>
-                    <p className="mt-2 text-sm text-gray-500">
-                      JPG, GIF or PNG. Max size of 800K
-                    </p>
+                  <div className="flex items-center gap-6">
+                    <Avatar 
+                      src={user.avatar ? `${import.meta.env.VITE_SERVER_URL}/uploads/${user.avatar}` : null} 
+                      alt={user?.name ?? null} 
+                      size="xl" 
+                    />
+                    <div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png"
+                        className="hidden"
+                        onChange={handleAvatarUpload}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        isLoading={isUploadingAvatar}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        Change Photo
+                      </Button>
+                      <p className="mt-2 text-sm text-gray-500">JPG or PNG. Max size of 10MB</p>
+                    </div>
                   </div>
+
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
