@@ -11,6 +11,10 @@ import RoleGuard from './routes/RoleGuard'
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 
+// Legal Pages
+import { TermsOfServicePage } from './pages/legal/TermsOfServicePage';
+import { PrivacyPolicyPage } from './pages/legal/PrivacyPolicyPage';
+
 // Dashboard Pages
 import { EntrepreneurDashboard } from './pages/dashboard/EntrepreneurDashboard';
 import { InvestorDashboard } from './pages/dashboard/InvestorDashboard';
@@ -44,6 +48,9 @@ function App() {
               {/* Public routes */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+
+              <Route path="/terms" element={<TermsOfServicePage />} />
+              <Route path="/privacy" element={<PrivacyPolicyPage />} />
 
               <Route path="/video-call/:roomId" element={<VideoCallPage />} />
 
