@@ -3,6 +3,7 @@ const Message = require('../models/Message');
 const User = require('../models/User');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
+const createNotification = require("../utils/createNotification")
 
 const getConversations = asyncHandler(async (req, res) => {
   const userId = req.user._id;
@@ -89,6 +90,14 @@ const sendMessage = asyncHandler(async (req, res, next) => {
     { path: 'sender', select: 'name avatar' },
     { path: 'receiver', select: 'name avatar' },
   ]);
+
+  await createNotification({
+    recipient: userId,
+    type: 'new_message',
+    title: 'New Message',
+    body: `${req.user.name} sent you a message`,
+    link: `/chat/${req.user._id}`,
+  });
 
   res.status(201).json({ success: true, message });
 });

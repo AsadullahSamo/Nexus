@@ -2,6 +2,7 @@ const { validationResult } = require('express-validator');
 const Meeting = require('../models/Meeting');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
+const createNotification = require("../utils/createNotification")
 
 const scheduleMeeting = asyncHandler(async (req, res, next) => {
 
@@ -41,6 +42,14 @@ const scheduleMeeting = asyncHandler(async (req, res, next) => {
 
   await meeting.populate(['organizer', 'participant']);
 
+  await createNotification({
+    recipient: participantId,
+    type: 'meeting_request',
+    title: 'New Meeting Request',
+    body: `${meeting.organizer.name} wants to schedule "${title}"`,
+    link: '/meetings',
+  });
+
   res.status(201).json({ success: true, meeting });
 });
 
@@ -79,6 +88,36 @@ const updateMeetingStatus = asyncHandler(async (req, res, next) => {
   meeting.status = status;
   await meeting.save();
   await meeting.populate(['organizer', 'participant']);
+
+  if (status === 'accepted') {
+    await createNotification({
+      recipient: meeting.organizer._id,
+      type: 'meeting_accepted',
+      title: 'Meeting Accepted',
+      body: `${meeting.participant.name} accepted "${meeting.title}"`,
+      link: '/meetings',
+    });
+  }
+
+  if (status === 'rejected') {
+    await createNotification({
+      recipient: meeting.organizer._id,
+      type: 'meeting_rejected',
+      title: 'Meeting Rejected',
+      body: `${meeting.participant.name} rejected "${meeting.title}"`,
+      link: '/meetings',
+    });
+  }
+
+  if (status === 'cancelled') {
+    await createNotification({
+      recipient: meeting.participant._id,
+      type: 'meeting_cancelled',
+      title: 'Meeting Cancelled',
+      body: `${meeting.organizer.name} cancelled "${meeting.title}"`,
+      link: '/meetings',
+    });
+  }
 
   res.status(200).json({ success: true, meeting });
 });

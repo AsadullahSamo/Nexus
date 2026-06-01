@@ -96,3 +96,13 @@ export interface InvestorProfile {
   maximumInvestment: string;
   totalInvestments: number;
 }
+
+export interface Notification {
+  _id: string;
+  type: 'meeting_request' | 'meeting_accepted' | 'meeting_rejected' | 'meeting_cancelled' | 'new_message' | 'transfer_received';
+  title: string;
+  body: string;
+  isRead: boolean;
+  link: string | null;
+  createdAt: string;
+}

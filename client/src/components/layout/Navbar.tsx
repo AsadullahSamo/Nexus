@@ -1,21 +1,22 @@
 import React, { useState } from 'react';
-import { useNavigate, Link, NavLink } from 'react-router-dom';
-import {
-  Menu,
-  X,
-  LogOut,
-} from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Menu, X, LogOut } from 'lucide-react';
 
 import { useAuth } from '../../context/AuthContext';
 import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/Button';
 import { getNavigation } from '../../config/navigation';
+import { useNotifications } from '../../hooks/useNotifications';
+import { NavItems } from '../navigation/NavItems';
 
 export const Navbar: React.FC = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  const { data: notifications = [] } = useNotifications();
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const handleLogout = () => {
     logout();
@@ -25,11 +26,6 @@ export const Navbar: React.FC = () => {
   const profileRoute = user
     ? `/profile/${user.role}/${user._id}`
     : '/login';
-
-  const dashboardRoute =
-    user?.role === 'entrepreneur'
-      ? '/dashboard/entrepreneur'
-      : '/dashboard/investor';
 
   if (!user) {
     return (
@@ -58,19 +54,22 @@ export const Navbar: React.FC = () => {
 
   return (
     <>
-      {/* TOP NAVBAR */}
       <nav className="bg-white shadow-md z-40 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
 
-            {/* LOGO */}
-            <div className="flex items-center">
-              <Link to={dashboardRoute} className="text-lg font-bold text-gray-900">
-                Business Nexus
+            <div className="flex-shrink-0 flex items-center">
+              <Link to="/" className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-primary-600 rounded-md flex items-center justify-center">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
+                    <path d="M20 7H4C2.89543 7 2 7.89543 2 9V19C2 20.1046 2.89543 21 4 21H20C21.1046 21 22 20.1046 22 19V9C22 7.89543 21.1046 7 20 7Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M16 21V5C16 3.89543 15.1046 3 14 3H10C8.89543 3 8 3.89543 8 5V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <span className="text-lg font-bold text-gray-900">Business Nexus</span>
               </Link>
             </div>
 
-            {/* DESKTOP USER */}
             <div className="hidden md:flex items-center gap-4">
               <Button
                 variant="ghost"
@@ -88,7 +87,6 @@ export const Navbar: React.FC = () => {
               </Link>
             </div>
 
-            {/* MOBILE BUTTON */}
             <div className="md:hidden flex items-center">
               <button
                 onClick={() => setIsDrawerOpen(true)}
@@ -102,7 +100,6 @@ export const Navbar: React.FC = () => {
         </div>
       </nav>
 
-      {/* OVERLAY */}
       {isDrawerOpen && (
         <div
           className="fixed inset-0 bg-black/40 z-40 md:hidden"
@@ -110,7 +107,6 @@ export const Navbar: React.FC = () => {
         />
       )}
 
-      {/* DRAWER */}
       <div
         className={`fixed top-0 left-0 h-full w-72 bg-white z-50 shadow-xl transform transition-transform duration-300 md:hidden ${
           isDrawerOpen ? 'translate-x-0' : '-translate-x-full'
@@ -118,7 +114,6 @@ export const Navbar: React.FC = () => {
       >
         <div className="flex flex-col h-full">
 
-          {/* HEADER */}
           <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
             <div className="flex items-center gap-3">
               <Avatar src={user.avatar} alt={user.name} size="md" />
@@ -140,71 +135,30 @@ export const Navbar: React.FC = () => {
             </button>
           </div>
 
-          {/* NAV CONTENT */}
           <div className="flex-1 overflow-y-auto py-4 px-3">
 
-            {/* MAIN ITEMS */}
             <div className="space-y-1">
-              {items.map((item) => {
-                const Icon = item.icon;
-
-                return (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    onClick={() => setIsDrawerOpen(false)}
-                    className={({ isActive }) =>
-                      `flex items-center px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-primary-50 text-primary-700'
-                          : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                      }`
-                    }
-                  >
-                    <span className="mr-3">
-                      <Icon size={18} />
-                    </span>
-                    {item.text}
-                  </NavLink>
-                );
-              })}
+             <NavItems
+                items={items}
+                unreadCount={unreadCount}
+                onClick={() => setIsDrawerOpen(false)}
+              />
             </div>
 
-            {/* COMMON ITEMS SECTION */}
             <div className="pt-4 mt-4 border-t border-gray-200 space-y-1">
 
               <p className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                 Settings
               </p>
 
-              {commonItems.map((item) => {
-                const Icon = item.icon;
-
-                return (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    onClick={() => setIsDrawerOpen(false)}
-                    className={({ isActive }) =>
-                      `flex items-center px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-primary-50 text-primary-700'
-                          : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                      }`
-                    }
-                  >
-                    <span className="mr-3">
-                      <Icon size={18} />
-                    </span>
-                    {item.text}
-                  </NavLink>
-                );
-              })}
-
+              <NavItems
+                items={commonItems}
+                unreadCount={unreadCount}
+                onClick={() => setIsDrawerOpen(false)}
+              />
             </div>
           </div>
 
-          {/* FOOTER */}
           <div className="p-4 border-t border-gray-200">
             <button
               onClick={() => {

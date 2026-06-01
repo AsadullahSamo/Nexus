@@ -1,36 +1,17 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getNavigation } from '../../config/navigation';
+import { useNotifications } from '../../hooks/useNotifications';
+import { NavItems } from '../navigation/NavItems';
 
 export const Sidebar: React.FC = () => {
   const { user } = useAuth();
   if (!user) return null;
 
+  const { data: notifications = [] } = useNotifications();
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
   const { items, commonItems } = getNavigation(user._id, user.role);
-
-  const renderItem = (item: any) => {
-    const Icon = item.icon;
-
-    return (
-      <NavLink
-        key={item.to}
-        to={item.to}
-        className={({ isActive }) =>
-          `flex items-center py-2.5 px-4 rounded-md transition-colors duration-200 ${
-            isActive
-              ? 'bg-primary-50 text-primary-700'
-              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-          }`
-        }
-      >
-        <span className="mr-3">
-          <Icon size={18} />
-        </span>
-        <span className="text-sm font-medium">{item.text}</span>
-      </NavLink>
-    );
-  };
 
   return (
     <div className="w-64 bg-white h-full border-r border-gray-200 hidden md:block">
@@ -39,7 +20,7 @@ export const Sidebar: React.FC = () => {
         {/* MAIN NAV */}
         <div className="flex-1 py-4 overflow-y-auto">
           <div className="px-3 space-y-1">
-            {items.map(renderItem)}
+            <NavItems items={items} unreadCount={unreadCount} />
           </div>
 
           {/* COMMON SECTION */}
@@ -49,7 +30,7 @@ export const Sidebar: React.FC = () => {
             </h3>
 
             <div className="mt-2 space-y-1">
-              {commonItems.map(renderItem)}
+              <NavItems items={commonItems} unreadCount={unreadCount} />
             </div>
           </div>
         </div>

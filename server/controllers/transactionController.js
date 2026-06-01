@@ -4,6 +4,7 @@ const Transaction = require('../models/Transaction');
 const User = require('../models/User');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
+const createNotification = require("../utils/createNotification")
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -110,6 +111,14 @@ const transfer = asyncHandler(async (req, res, next) => {
     type: 'transfer',
     amount,
     status: 'completed',
+  });
+
+  await createNotification({
+    recipient: recipient._id,
+    type: 'transfer_received',
+    title: 'Transfer Received',
+    body: `${req.user.name} sent you $${amount.toFixed(2)}`,
+    link: '/payments',
   });
 
   res.status(201).json({ success: true, transaction });
