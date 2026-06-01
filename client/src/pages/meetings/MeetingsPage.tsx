@@ -395,13 +395,13 @@ export const MeetingsPage = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Meetings</h1>
           <p className="text-gray-600">Schedule and manage your meetings</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <div className="flex rounded-md border border-gray-200 overflow-hidden">
             <button
               onClick={() => setView('list')}

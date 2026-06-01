@@ -23,7 +23,7 @@ export const DashboardLayout: React.FC = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
       
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
         <Sidebar />
         
         <main className="flex-1 overflow-y-auto p-6">
