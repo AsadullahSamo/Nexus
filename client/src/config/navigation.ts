@@ -2,6 +2,7 @@ import {
   Home, Building2, CircleDollarSign, Users, MessageCircle, Bell,
   FileText, Settings, HelpCircle, Calendar, Wallet, 
   type LucideIcon,
+  Handshake,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -15,6 +16,7 @@ const sharedItems: NavItem[] = [
   { to: '/messages', icon: MessageCircle, text: 'Messages' },
   { to: '/meetings', icon: Calendar, text: 'Meetings' },
   { to: '/notifications', icon: Bell, text: 'Notifications' },
+  { to: '/deals', icon: Handshake, text: 'Deals' },
   { to: '/payments', icon: Wallet, text: 'Payments' },
 ];
 
@@ -36,7 +38,6 @@ const getInvestorItems = (userId: string): NavItem[] => [
   { to: `/profile/investor/${userId}`, icon: CircleDollarSign, text: 'My Portfolio', },
   { to: '/entrepreneurs', icon: Users, text: 'Find Entrepreneurs', },
   ...sharedItems,
-  { to: '/deals', icon: FileText, text: 'Deals' },
 ];
 
 export const getNavigation = (userId: string, role: string) => {

@@ -17,6 +17,7 @@ const documentRoutes = require('./routes/documents');
 const transactionRoutes = require('./routes/transactions');
 const profileRoutes = require('./routes/profiles');
 const notificationRoutes = require('./routes/notifications');
+const dealRoutes = require('./routes/deals');
 
 const { apiLimiter } = require('./middlewares/rateLimiter');
 const mongoSanitize = require('./middlewares/sanitize');
@@ -65,6 +66,7 @@ app.use('/api/documents', documentRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/profiles', profileRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use("/api/deals", dealRoutes)
 
 app.use(errorHandler);
 

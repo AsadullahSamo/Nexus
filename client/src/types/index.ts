@@ -99,10 +99,22 @@ export interface InvestorProfile {
 
 export interface Notification {
   _id: string;
-  type: 'meeting_request' | 'meeting_accepted' | 'meeting_rejected' | 'meeting_cancelled' | 'new_message' | 'transfer_received';
+  type: 'meeting_request' | 'meeting_accepted' | 'meeting_rejected' | 'meeting_cancelled' | 'new_message' | 'transfer_received' | 'deal_created' | 'deal_updated' | 'deal_deleted';
   title: string;
   body: string;
   isRead: boolean;
   link: string | null;
+  createdAt: string;
+}
+
+export interface Deal {
+  _id: string;
+  investor: { _id: string; name: string; avatar: string | null; role: string };
+  entrepreneur: { _id: string; name: string; avatar: string | null; role: string };
+  amount: string;
+  equity: string;
+  stage: 'Pre-seed' | 'Seed' | 'Series A' | 'Series B';
+  status: 'Due Diligence' | 'Term Sheet' | 'Negotiation' | 'Closed' | 'Passed';
+  notes: string;
   createdAt: string;
 }
