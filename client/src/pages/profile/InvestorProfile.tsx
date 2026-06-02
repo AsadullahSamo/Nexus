@@ -1,6 +1,6 @@
 import React from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MessageCircle, UserCircle } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { MessageCircle } from 'lucide-react';
 import { Avatar } from '../../components/ui/Avatar';
 import { Button } from '../../components/ui/Button';
 import { Card, CardBody, CardHeader } from '../../components/ui/Card';
@@ -13,8 +13,9 @@ export const InvestorProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
+
   const { data: investor, isLoading } = useProfile(id ?? '');
-  const { data: investorProfile } = useInvestorProfile(id ?? '');
+  const { data: p } = useInvestorProfile(id ?? '');
 
   if (isLoading) {
     return (
@@ -28,10 +29,6 @@ export const InvestorProfile: React.FC = () => {
     return (
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold text-gray-900">Investor not found</h2>
-        <p className="text-gray-600 mt-2">This profile doesn't exist or has been removed.</p>
-        <Link to="/dashboard/entrepreneur">
-          <Button variant="outline" className="mt-4">Back to Dashboard</Button>
-        </Link>
       </div>
     );
   }
@@ -39,27 +36,31 @@ export const InvestorProfile: React.FC = () => {
   const isCurrentUser = currentUser?._id === investor._id;
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 bg-gray-50 min-h-screen p-4 sm:p-6">
+
       <Card>
-        <CardBody className="sm:flex sm:items-start sm:justify-between p-6">
-          <div className="sm:flex sm:space-x-6">
-            <Avatar
-              src={investor.avatar ?? null}
-              alt={investor.name}
-              size="xl"
-              className="mx-auto sm:mx-0"
-            />
-            <div className="mt-4 sm:mt-0 text-center sm:text-left">
-              <h1 className="text-2xl font-bold text-gray-900">{investor.name}</h1>
-              <p className="text-gray-600 mt-1">{investor.email}</p>
-              <div className="flex flex-wrap gap-2 justify-center sm:justify-start mt-3">
+        <CardBody className="flex flex-col sm:flex-row justify-between gap-6 p-6">
+
+          <div className="flex items-center gap-5">
+
+            <Avatar src={investor.avatar ?? null} size="xl" alt="Investor Avatar" />
+
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {investor.name}
+              </h1>
+
+              <p className="text-gray-600">{investor.email}</p>
+
+              <div className="flex gap-2 mt-2">
                 <Badge variant="secondary">Investor</Badge>
                 {investor.isVerified && <Badge variant="success">Verified</Badge>}
               </div>
             </div>
+
           </div>
 
-          <div className="mt-6 sm:mt-0 flex gap-2 justify-center sm:justify-end">
+          <div className="flex gap-2">
             {!isCurrentUser && (
               <Button
                 leftIcon={<MessageCircle size={18} />}
@@ -68,89 +69,90 @@ export const InvestorProfile: React.FC = () => {
                 Message
               </Button>
             )}
-            {isCurrentUser && (
-              <Button
-                variant="outline"
-                leftIcon={<UserCircle size={18} />}
-                onClick={() => navigate('/settings')}
-              >
-                Edit Profile
-              </Button>
-            )}
           </div>
+
         </CardBody>
       </Card>
 
-      {investor.bio && (
+      <Card>
+        <CardHeader>
+          <h2 className="font-semibold">Investment Profile</h2>
+        </CardHeader>
+
+        <CardBody className="space-y-6">
+
+          <div className="grid grid-cols-2 gap-4">
+
+            <div>
+              <p className="text-xs text-gray-500">Minimum Investment</p>
+              <p className="font-medium">
+                {p?.minimumInvestment ? `$${p.minimumInvestment}` : '—'}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-500">Maximum Investment</p>
+              <p className="font-medium">
+                {p?.maximumInvestment ? `$${p.maximumInvestment}` : '—'}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-500">Total Investments</p>
+              <p className="font-medium">
+                {p?.totalInvestments ?? 0}
+              </p>
+            </div>
+
+          </div>
+
+          {(p?.investmentInterests ?? []).length > 0 && (            
+            <div>
+              <p className="text-xs text-gray-500 mb-2">Investment Interests</p>
+              <div className="flex flex-wrap gap-2">
+                {p?.investmentInterests.map((i) => (
+                  <Badge key={i} variant="primary">
+                    {i}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+            {(p?.investmentStage ?? []).length > 0 && (            
+              <div>
+                <p className="text-xs text-gray-500 mb-2">Preferred Stages</p>
+                <div className="flex flex-wrap gap-2">
+                  {p?.investmentStage.map((s) => (
+                    <Badge key={s} variant="secondary">
+                      {s}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+        </CardBody>
+      </Card>
+
+      {(p?.investmentStage ?? []).length > 0 && (     
         <Card>
           <CardHeader>
-            <h2 className="text-lg font-medium text-gray-900">About</h2>
+            <h2 className="font-semibold">Portfolio</h2>
           </CardHeader>
+
           <CardBody>
-            <p className="text-gray-700">{investor.bio}</p>
+            <div className="flex flex-wrap gap-2">
+              {p?.portfolioCompanies.map((c) => (
+                <Badge key={c} variant="gray">
+                  {c}
+                </Badge>
+              ))}
+            </div>
           </CardBody>
         </Card>
       )}
 
-      {investorProfile && (
-        <Card>
-          <CardHeader>
-            <h2 className="text-lg font-medium text-gray-900">Investment Info</h2>
-          </CardHeader>
-          <CardBody className="space-y-4">
-            {investorProfile.investmentInterests.length > 0 && (
-              <div>
-                <span className="text-sm text-gray-500">Investment Interests</span>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {investorProfile.investmentInterests.map((interest) => (
-                    <Badge key={interest} variant="primary" size="sm">{interest}</Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-            {investorProfile.investmentStage.length > 0 && (
-              <div>
-                <span className="text-sm text-gray-500">Investment Stage</span>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {investorProfile.investmentStage.map((stage) => (
-                    <Badge key={stage} variant="secondary" size="sm">{stage}</Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div className="grid grid-cols-2 gap-4">
-              {investorProfile.minimumInvestment && (
-                <div>
-                  <span className="text-sm text-gray-500">Min Investment</span>
-                  <p className="text-sm font-medium text-gray-900">{investorProfile.minimumInvestment}</p>
-                </div>
-              )}
-              {investorProfile.maximumInvestment && (
-                <div>
-                  <span className="text-sm text-gray-500">Max Investment</span>
-                  <p className="text-sm font-medium text-gray-900">{investorProfile.maximumInvestment}</p>
-                </div>
-              )}
-              {investorProfile.totalInvestments > 0 && (
-                <div>
-                  <span className="text-sm text-gray-500">Total Investments</span>
-                  <p className="text-sm font-medium text-gray-900">{investorProfile.totalInvestments} companies</p>
-                </div>
-              )}
-            </div>
-            {investorProfile.portfolioCompanies.length > 0 && (
-              <div>
-                <span className="text-sm text-gray-500">Portfolio Companies</span>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {investorProfile.portfolioCompanies.map((company) => (
-                    <Badge key={company} variant="gray" size="sm">{company}</Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardBody>
-        </Card>
-      )}
     </div>
   );
 };
