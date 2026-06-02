@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useRef} from 'react';
 import {useProfile, useUpdateProfile} from '../../hooks/useProfile'
-import { User, Lock, Bell, Globe, Palette, CreditCard } from 'lucide-react';
+import { User, Lock, CreditCard } from 'lucide-react';
 import { Card, CardHeader, CardBody } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -39,6 +39,7 @@ export const SettingsPage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const [entrepreneurFields, setEntrepreneurFields] = useState({
     startupName: '', industry: '', pitchSummary: '', fundingNeeded: '', location: '', 
@@ -49,6 +50,8 @@ export const SettingsPage: React.FC = () => {
     investmentInterests: '', investmentStage: '', portfolioCompanies: '',
     minimumInvestment: '', maximumInvestment: '', totalInvestments: ''
   })
+
+
 
   const navigate = useNavigate()
   
@@ -159,6 +162,7 @@ export const SettingsPage: React.FC = () => {
 
   const handleSave = async () => {
     setIsSaving(true);
+    setSaveSuccess(false);
     try {
       const saves: Promise<any>[] = [
         new Promise((resolve, reject) =>
@@ -172,7 +176,7 @@ export const SettingsPage: React.FC = () => {
       if (user!.role === 'entrepreneur') {
         saves.push(
           new Promise((resolve, reject) =>
-            updateEntrepreneurProfile (
+            updateEntrepreneurProfile(
               {
                 userId: user!._id,
                 data: {
@@ -213,6 +217,8 @@ export const SettingsPage: React.FC = () => {
       }
 
       await Promise.all(saves);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
     } finally {
       setIsSaving(false);
     }
@@ -346,6 +352,7 @@ export const SettingsPage: React.FC = () => {
                     label="Email"
                     type="email"
                     defaultValue={user.email}
+                    disabled
                   />
                   
                   <Input
@@ -426,12 +433,22 @@ export const SettingsPage: React.FC = () => {
                   </Card>
                 )}
                 
-                <div className="flex justify-end gap-3">
-                  <Button variant="outline">Cancel</Button>
-                  <Button
-                    isLoading={isSaving}
-                    onClick={handleSave}
-                  >
+                <div className="flex justify-end items-center gap-3">
+                  {saveSuccess && (
+                    <span className="text-sm text-green-600 flex items-center gap-1">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M3 8L6.5 11.5L13 4.5" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      Saved successfully
+                    </span>
+                  )}
+                  <Button variant="outline" onClick={() => {
+                    setName(profile?.name ?? '');
+                    setBio(profile?.bio ?? '');
+                  }}>
+                    Cancel
+                  </Button>
+                  <Button isLoading={isSaving} onClick={handleSave}>
                     Save Changes
                   </Button>
                 </div>
