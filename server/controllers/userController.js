@@ -72,4 +72,18 @@ const uploadAvatar = asyncHandler(async (req, res, next) => {
   res.status(200).json({ success: true, user })
 })
 
-module.exports = { getUserById, updateProfile, searchUsers, uploadAvatar };
+const browseUsers = asyncHandler(async (req, res) => {
+  const { role } = req.query;
+  const filter = {
+    _id: { $ne: req.user._id },
+  };
+  if (role) filter.role = role;
+
+  const users = await User.find(filter)
+    .select('name avatar role bio')
+    .sort({ createdAt: -1 });
+
+  res.status(200).json({ success: true, users });
+});
+
+module.exports = { getUserById, updateProfile, searchUsers, uploadAvatar, browseUsers };
