@@ -254,7 +254,18 @@ export const DealsPage: React.FC = () => {
             <Badge
               key={s}
               variant={selectedStatus.includes(s) ? statusColors[s] : 'gray'}
-              className="cursor-pointer"
+              className={`cursor-pointer select-none transition-all ${
+                selectedStatus.includes(s)
+                  ? 'ring-2 ring-primary-300'
+                  : ''
+              }`}
+              onClick={() =>
+                setSelectedStatus((prev) =>
+                  prev.includes(s)
+                    ? prev.filter((item) => item !== s)
+                    : [...prev, s]
+                )
+              }
             >
               {s}
             </Badge>
