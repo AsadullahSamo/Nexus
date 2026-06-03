@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Send, Video, Info, MessageCircle } from 'lucide-react';
+import { Send, Video, Info, MessageCircle, Paperclip, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCall } from '../../context/CallContext';
 import { useMessages, useSendMessage } from '../../hooks/useMessages';
@@ -12,15 +12,22 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { useProfile } from '../../hooks/useProfile';
 import socket from '../../lib/socket';
+import { useDocuments } from '../../hooks/useDocuments';
+import { useShareDocument } from '../../hooks/useDocuments';
 
 export const ChatPage = () => {
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
   const { initiateCall } = useCall();
+  const { data: { documents = [] } = {} } = useDocuments(currentUser?._id);
+  const { mutate: shareDocument } = useShareDocument();
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [newMessage, setNewMessage] = useState('');
+  const [showDocPicker, setShowDocPicker] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { data: messages = [], isLoading } = useMessages(userId ?? '');
@@ -70,6 +77,26 @@ export const ChatPage = () => {
             receiverId: userId,
             message,
           });
+        },
+      }
+    );
+  };
+
+  const handleShareDoc = (doc: any) => {
+    if (!userId) return;
+    shareDocument(
+      { id: doc._id, userId },
+      {
+        onSuccess: () => {
+          sendMessage(
+            { userId, content: `📎 Document shared: ${doc.name}` },
+            {
+              onSuccess: (message) => {
+                setShowDocPicker(false);
+                socket.emit('send-message', { receiverId: userId, message });
+              },
+            }
+          );
         },
       }
     );
@@ -157,27 +184,61 @@ export const ChatPage = () => {
               )}
             </div>
 
-            <div className="border-t border-gray-200 p-4 flex-shrink-0">
-              <form onSubmit={handleSend} className="flex items-center space-x-2">
-                <Input
-                  type="text"
-                  placeholder="Type a message..."
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  fullWidth
-                  className="flex-1"
-                />
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={!newMessage.trim() || isPending}
-                  className="rounded-full p-2 w-10 h-10 flex items-center justify-center flex-shrink-0"
-                  aria-label="Send message"
-                >
-                  <Send size={18} />
-                </Button>
-              </form>
+           <div className="border-t border-gray-200 p-4 flex-shrink-0">
+          {showDocPicker && (
+            <div className="mb-3 border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+              <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-200">
+                <p className="text-xs font-medium text-gray-700">Share a document</p>
+                <button onClick={() => setShowDocPicker(false)}>
+                  <X size={14} className="text-gray-500" />
+                </button>
+              </div>
+              {documents.length === 0 ? (
+                <p className="text-xs text-gray-500 p-3">No documents uploaded yet</p>
+              ) : (
+                <div className="max-h-48 overflow-y-auto divide-y divide-gray-100">
+                  {documents.map((doc: any) => (
+                    <button
+                      key={doc._id}
+                      onClick={() => handleShareDoc(doc)}
+                      className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 text-left"
+                    >
+                      <div className="text-xs font-medium text-gray-900 truncate flex-1">{doc.name}</div>
+                      <span className="text-xs text-gray-400 flex-shrink-0">{doc.mimetype.includes('pdf') ? 'PDF' : doc.mimetype.includes('image') ? 'Image' : 'File'}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+          )}
+          <form onSubmit={handleSend} className="flex items-center space-x-2">
+            <button
+              type="button"
+              onClick={() => setShowDocPicker((p) => !p)}
+              className={`p-2 rounded-full transition-colors flex-shrink-0 ${showDocPicker ? 'bg-primary-100 text-primary-600' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
+              title="Share document"
+            >
+              <Paperclip size={18} />
+            </button>
+            <Input
+              type="text"
+              placeholder="Type a message..."
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              fullWidth
+              className="flex-1"
+            />
+            <Button
+              type="submit"
+              size="sm"
+              disabled={!newMessage.trim() || isPending}
+              className="rounded-full p-2 w-10 h-10 flex items-center justify-center flex-shrink-0"
+              aria-label="Send message"
+            >
+              <Send size={18} />
+            </Button>
+          </form>
+        </div>
           </>
         ) : (
           <div className="h-full flex flex-col items-center justify-center p-4">

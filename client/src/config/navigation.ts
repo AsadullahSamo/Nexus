@@ -17,6 +17,7 @@ const sharedItems: NavItem[] = [
   { to: '/meetings', icon: Calendar, text: 'Meetings' },
   { to: '/notifications', icon: Bell, text: 'Notifications' },
   { to: '/deals', icon: Handshake, text: 'Deals' },
+  { to: '/documents', icon: FileText, text: 'Documents' },
   { to: '/payments', icon: Wallet, text: 'Payments' },
 ];
 
@@ -30,7 +31,6 @@ const getEntrepreneurItems = (userId: string): NavItem[] => [
   { to: `/profile/entrepreneur/${userId}`, icon: Building2, text: 'My Portfolio', },
   { to: '/investors', icon: CircleDollarSign, text: 'Find Investors',},
   ...sharedItems,
-  { to: '/documents', icon: FileText, text: 'Documents' },
 ];
 
 const getInvestorItems = (userId: string): NavItem[] => [

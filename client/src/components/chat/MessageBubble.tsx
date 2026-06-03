@@ -77,7 +77,7 @@ export const MessageBubble = ({ message, isOwnMessage }: ChatMessageProps) => {
                 : 'bg-gray-100 text-gray-800 rounded-bl-none'
             }`}
           >
-            {/* <p className="text-sm">{message.content}</p> */}
+            
             {isEditing ? (
               <input
                 type="text"

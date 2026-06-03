@@ -99,7 +99,7 @@ export interface InvestorProfile {
 
 export interface Notification {
   _id: string;
-  type: 'meeting_request' | 'meeting_accepted' | 'meeting_rejected' | 'meeting_cancelled' | 'new_message' | 'transfer_received' | 'deal_created' | 'deal_updated' | 'deal_deleted';
+  type: 'meeting_request' | 'meeting_accepted' | 'meeting_rejected' | 'meeting_cancelled' | 'new_message' | 'transfer_received' | 'deal_created' | 'deal_updated' | 'deal_deleted' | 'document_shared';
   title: string;
   body: string;
   isRead: boolean;

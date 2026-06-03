@@ -3,7 +3,7 @@ import api from '../lib/api';
 
 const fetchDocuments = async () => {
   const res = await api.get('/documents');
-  return res.data.documents;
+  return res.data;
 };
 
 const uploadDocument = async (formData: FormData) => {
@@ -49,6 +49,24 @@ export const useSaveSignature = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: saveSignature,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['documents'] }),
+  });
+};
+
+export const useShareDocument = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, userId }: { id: string; userId: string }) =>
+      api.patch(`/documents/${id}/share`, { userId }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['documents'] }),
+  });
+};
+
+export const useUnshareDocument = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, userId }: { id: string; userId: string }) =>
+      api.delete(`/documents/${id}/share/${userId}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['documents'] }),
   });
 };

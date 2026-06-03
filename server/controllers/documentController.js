@@ -3,6 +3,7 @@ const fs = require('fs');
 const Document = require('../models/Document');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
+const createNotification = require('../utils/createNotification');
 
 const uploadDocument = asyncHandler(async (req, res, next) => {
   if (!req.file) return next(new AppError('No file uploaded', 400));
@@ -22,11 +23,18 @@ const uploadDocument = asyncHandler(async (req, res, next) => {
 });
 
 const getMyDocuments = asyncHandler(async (req, res) => {
-  const documents = await Document.find({ uploadedBy: req.user._id })
-    .populate('uploadedBy', 'name avatar')
-    .sort({ createdAt: -1 });
+  const [owned, shared] = await Promise.all([
+    Document.find({ uploadedBy: req.user._id })
+      .populate('uploadedBy', 'name avatar')
+      .populate('sharedWith', 'name avatar')
+      .sort({ createdAt: -1 }),
+    Document.find({ sharedWith: req.user._id })
+      .populate('uploadedBy', 'name avatar')
+      .populate('sharedWith', 'name avatar')
+      .sort({ createdAt: -1 }),
+  ]);
 
-  res.status(200).json({ success: true, documents });
+  res.status(200).json({ success: true, documents: owned, sharedDocuments: shared });
 });
 
 const deleteDocument = asyncHandler(async (req, res, next) => {
@@ -84,4 +92,48 @@ const saveSignature = asyncHandler(async (req, res, next) => {
   res.status(200).json({ success: true, document });
 });
 
-module.exports = { uploadDocument, getMyDocuments, deleteDocument, downloadDocument, saveSignature };
+const shareDocument = asyncHandler(async (req, res, next) => {
+  const { userId } = req.body;
+  const document = await Document.findById(req.params.id);
+  if (!document) return next(new AppError('Document not found', 404));
+
+  if (document.uploadedBy.toString() !== req.user._id.toString()) {
+    return next(new AppError('Only the owner can share this document', 403));
+  }
+
+  if (document.sharedWith.map(String).includes(userId)) {
+    return next(new AppError('Already shared with this user', 400));
+  }
+
+  document.sharedWith.push(userId);
+  await document.save();
+  await document.populate('sharedWith', 'name avatar');
+
+  await createNotification({
+    recipient: userId,
+    type: 'document_shared',
+    title: 'Document Shared',
+    body: `${req.user.name} shared "${document.name}" with you`,
+    link: '/documents',
+  });
+
+  res.status(200).json({ success: true, document });
+});
+
+const unshareDocument = asyncHandler(async (req, res, next) => {
+  const document = await Document.findById(req.params.id);
+  if (!document) return next(new AppError('Document not found', 404));
+
+  if (document.uploadedBy.toString() !== req.user._id.toString()) {
+    return next(new AppError('Only the owner can unshare this document', 403));
+  }
+
+  document.sharedWith = document.sharedWith.filter(
+    (id) => id.toString() !== req.params.userId
+  );
+  await document.save();
+
+  res.status(200).json({ success: true, message: 'User removed from shared list' });
+});
+
+module.exports = { uploadDocument, getMyDocuments, deleteDocument, downloadDocument, saveSignature, shareDocument, unshareDocument };
