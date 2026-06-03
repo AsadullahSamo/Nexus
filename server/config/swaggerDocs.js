@@ -217,6 +217,37 @@ module.exports = {
     },
   },
 
+  '/users/browse': {
+    get: {
+      summary: 'Browse all users by role',
+      tags: ['Users'],
+      parameters: [
+        {
+          in: 'query',
+          name: 'role',
+          schema: { type: 'string', enum: ['entrepreneur', 'investor'] },
+          description: 'Filter by role',
+        },
+      ],
+      responses: {
+        200: {
+          description: 'List of users',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean' },
+                  users: { type: 'array', items: { $ref: '#/components/schemas/User' } },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+
   '/users/{id}': {
     get: {
       summary: 'Get user by ID',
@@ -278,6 +309,46 @@ module.exports = {
           },
         },
         403: { description: 'Cannot update another user profile' },
+      },
+    },
+  },
+
+  '/users/{id}/avatar': {
+    patch: {
+      summary: 'Upload avatar for a user',
+      tags: ['Users'],
+      parameters: [
+        { in: 'path', name: 'id', required: true, schema: { type: 'string' } },
+      ],
+      requestBody: {
+        required: true,
+        content: {
+          'multipart/form-data': {
+            schema: {
+              type: 'object',
+              properties: {
+                avatar: { type: 'string', format: 'binary' },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        200: {
+          description: 'Avatar uploaded',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean' },
+                  user: { $ref: '#/components/schemas/User' },
+                },
+              },
+            },
+          },
+        },
+        403: { description: 'Can only update own avatar' },
       },
     },
   },
@@ -489,6 +560,63 @@ module.exports = {
     },
   },
 
+  '/messages/{messageId}': {
+    delete: {
+      summary: 'Delete a message',
+      tags: ['Messages'],
+      parameters: [
+        { in: 'path', name: 'messageId', required: true, schema: { type: 'string' } },
+      ],
+      responses: {
+        200: { description: 'Message deleted' },
+        403: { description: 'Can only delete own messages' },
+        404: { description: 'Message not found' },
+      },
+    },
+  },
+
+  '/messages/{messageId}': {
+    patch: {
+      summary: 'Edit a message',
+      tags: ['Messages'],
+      parameters: [
+        { in: 'path', name: 'messageId', required: true, schema: { type: 'string' } },
+      ],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['content'],
+              properties: {
+                content: { type: 'string' },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        200: {
+          description: 'Message updated',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean' },
+                  message: { $ref: '#/components/schemas/Message' },
+                },
+              },
+            },
+          },
+        },
+        403: { description: 'Can only edit own messages' },
+        404: { description: 'Message not found' },
+      },
+    },
+  },
+
   '/documents': {
     get: {
       summary: 'Get all documents for current user',
@@ -601,6 +729,52 @@ module.exports = {
       },
       responses: {
         200: { description: 'Signature saved' },
+        404: { description: 'Document not found' },
+      },
+    },
+  },
+
+  '/documents/{id}/share': {
+    patch: {
+      summary: 'Share a document with a user',
+      tags: ['Documents'],
+      parameters: [
+        { in: 'path', name: 'id', required: true, schema: { type: 'string' } },
+      ],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['userId'],
+              properties: {
+                userId: { type: 'string' },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        200: { description: 'Document shared successfully' },
+        400: { description: 'Already shared with this user' },
+        403: { description: 'Only owner can share' },
+        404: { description: 'Document not found' },
+      },
+    },
+  },
+
+  '/documents/{id}/share/{userId}': {
+    delete: {
+      summary: 'Remove a user from document shared list',
+      tags: ['Documents'],
+      parameters: [
+        { in: 'path', name: 'id', required: true, schema: { type: 'string' } },
+        { in: 'path', name: 'userId', required: true, schema: { type: 'string' } },
+      ],
+      responses: {
+        200: { description: 'User removed from shared list' },
+        403: { description: 'Only owner can unshare' },
         404: { description: 'Document not found' },
       },
     },
@@ -770,4 +944,286 @@ module.exports = {
       },
     },
   },
+
+  '/deals': {
+    get: {
+      summary: 'Get all deals for current user',
+      tags: ['Deals'],
+      responses: {
+        200: {
+          description: 'List of deals',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean' },
+                  deals: {
+                    type: 'array',
+                    items: { $ref: '#/components/schemas/Deal' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    post: {
+      summary: 'Create a new investment deal (investor only)',
+      tags: ['Deals'],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['entrepreneurId', 'amount', 'equity', 'stage'],
+              properties: {
+                entrepreneurId: { type: 'string' },
+                amount: { type: 'string' },
+                equity: { type: 'string' },
+                stage: { type: 'string', enum: ['Pre-seed', 'Seed', 'Series A', 'Series B'] },
+                notes: { type: 'string' },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        201: {
+          description: 'Deal created',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean' },
+                  deal: { $ref: '#/components/schemas/Deal' },
+                },
+              },
+            },
+          },
+        },
+        403: { description: 'Only investors can create deals' },
+        404: { description: 'Entrepreneur not found' },
+      },
+    },
+  },
+
+  '/deals/{id}': {
+    patch: {
+      summary: 'Update a deal',
+      tags: ['Deals'],
+      parameters: [
+        { in: 'path', name: 'id', required: true, schema: { type: 'string' } },
+      ],
+      requestBody: {
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                amount: { type: 'string' },
+                equity: { type: 'string' },
+                stage: { type: 'string', enum: ['Pre-seed', 'Seed', 'Series A', 'Series B'] },
+                status: { type: 'string', enum: ['Due Diligence', 'Term Sheet', 'Negotiation', 'Closed', 'Passed'] },
+                notes: { type: 'string' },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        200: {
+          description: 'Deal updated',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean' },
+                  deal: { $ref: '#/components/schemas/Deal' },
+                },
+              },
+            },
+          },
+        },
+        403: { description: 'Only the investor can update this deal' },
+        404: { description: 'Deal not found' },
+      },
+    },
+    delete: {
+      summary: 'Delete a deal',
+      tags: ['Deals'],
+      parameters: [
+        { in: 'path', name: 'id', required: true, schema: { type: 'string' } },
+      ],
+      responses: {
+        200: { description: 'Deal deleted' },
+        403: { description: 'Only the investor can delete this deal' },
+        404: { description: 'Deal not found' },
+      },
+    },
+  },
+
+  '/notifications': {
+    get: {
+      summary: 'Get all notifications for current user',
+      tags: ['Notifications'],
+      responses: {
+        200: {
+          description: 'List of notifications',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean' },
+                  notifications: {
+                    type: 'array',
+                    items: { $ref: '#/components/schemas/Notification' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+
+  '/notifications/read-all': {
+    patch: {
+      summary: 'Mark all notifications as read',
+      tags: ['Notifications'],
+      responses: {
+        200: { description: 'All notifications marked as read' },
+      },
+    },
+  },
+
+  '/notifications/{id}/read': {
+    patch: {
+      summary: 'Mark a notification as read',
+      tags: ['Notifications'],
+      parameters: [
+        { in: 'path', name: 'id', required: true, schema: { type: 'string' } },
+      ],
+      responses: {
+        200: { description: 'Notification marked as read' },
+        404: { description: 'Notification not found' },
+      },
+    },
+  },
+
+  '/profiles/entrepreneur/{userId}': {
+    get: {
+      summary: 'Get entrepreneur profile for a user',
+      tags: ['Profiles'],
+      parameters: [
+        { in: 'path', name: 'userId', required: true, schema: { type: 'string' } },
+      ],
+      responses: {
+        200: {
+          description: 'Entrepreneur profile',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean' },
+                  profile: { type: 'object' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    patch: {
+      summary: 'Update entrepreneur profile',
+      tags: ['Profiles'],
+      parameters: [
+        { in: 'path', name: 'userId', required: true, schema: { type: 'string' } },
+      ],
+      requestBody: {
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                startupName: { type: 'string' },
+                industry: { type: 'string' },
+                pitchSummary: { type: 'string' },
+                fundingNeeded: { type: 'string' },
+                location: { type: 'string' },
+                foundedYear: { type: 'integer' },
+                teamSize: { type: 'integer' },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        200: { description: 'Startup profile updated' },
+        403: { description: 'Can only update own profile' },
+      },
+    },
+  },
+
+  '/profiles/investor/{userId}': {
+    get: {
+      summary: 'Get investor profile for a user',
+      tags: ['Profiles'],
+      parameters: [
+        { in: 'path', name: 'userId', required: true, schema: { type: 'string' } },
+      ],
+      responses: {
+        200: {
+          description: 'Investor profile',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean' },
+                  profile: { type: 'object' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    patch: {
+      summary: 'Update investor profile',
+      tags: ['Profiles'],
+      parameters: [
+        { in: 'path', name: 'userId', required: true, schema: { type: 'string' } },
+      ],
+      requestBody: {
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                investmentInterests: { type: 'array', items: { type: 'string' } },
+                investmentStage: { type: 'array', items: { type: 'string' } },
+                portfolioCompanies: { type: 'array', items: { type: 'string' } },
+                minimumInvestment: { type: 'string' },
+                maximumInvestment: { type: 'string' },
+                totalInvestments: { type: 'integer' },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        200: { description: 'Investor profile updated' },
+        403: { description: 'Can only update own profile' },
+      },
+    },
+  },
+
 };
